@@ -1,0 +1,57 @@
+================================================================================
+                    MASTER VENDOR SUPPLY AGREEMENT
+================================================================================
+Supplier: Verma Tech Components
+Address:  23 Electronics Zone, MIDC Bhosari, Pune, Maharashtra 411026
+GSTIN:    27FFFFF1234F6Z1
+Email:    orders@vermatech.in | Phone: +91 98220 67890
+Payment Terms: Net 30 Days
+Agreement Date: 2026-01-01
+Jurisdiction: Indian Contract Act, 1872
+
+1. SCOPE AND PRICING
+The Supplier agrees to deliver the following items at the agreed fixed unit rates.
+All rates are denominated in Rs. (Indian Rupees).
+
+Item Name                                  Agreed Unit Price   
+-----------------------------------------------------------------
+Ergonomic Office Chair                     Rs.    4500.00
+Standing Desk 120cm                        Rs.   12000.00
+Wireless Keyboard & Mouse Combo            Rs.    1500.00
+24-inch IPS Monitor                        Rs.    8500.00
+High-Speed USB-C Dock                      Rs.    3200.00
+A4 Copier Paper (Box of 5 Reams)           Rs.    1100.00
+Cat6 Network Cable (305m Roll)             Rs.    4200.00
+Industrial Surge Protector Strip           Rs.    1800.00
+HD 1080p Video Conferencing Webcam         Rs.    2600.00
+Active Noise-Cancelling Headset            Rs.    3800.00
+
+2. TAXATION & GST CLAUSE
+All listed prices are exclusive of Goods and Services Tax (GST).
+A standard GST rate of 18% (comprising 9% CGST and 9% SGST) shall apply to all
+tax invoices. Valid GSTIN of both the supplier and buyer must appear on invoices.
+
+3. DELIVERY & ACCEPTANCE
+Goods will only be deemed received upon verification by warehouse staff and
+issuance of a valid Goods Received Note (GRN). Invoices must match the approved
+Purchase Order (PO) and GRN quantities.
+
+4. PAYMENT TERMS
+Payment shall be released within 30 days from the date of receipt
+of a verified and clean invoice. Any invoice containing discrepancies will be
+placed on hold with status 'needs_review' or 'mismatch_detected'.
+
+5. WARRANTY AND DEFECT LIABILITY
+24 months extended warranty on microchips, video webcams, and electronic hardware components. Free repair or replacement.
+
+6. LATE DELIVERY PENALTY
+A penalty of 1% per week of delay, capped at 5% of purchase order value.
+
+7. EARLY PAYMENT CASH DISCOUNT
+2% cash discount if payment is released within 10 days of clean invoice receipt.
+
+Clause 8. JURISDICTION & DISPUTE RESOLUTION
+Disputes settled via sole arbitrator in Pune, Maharashtra.
+
+Authorized Signatory,               Authorized Signatory,              
+Verma Tech Components               VouchFlow AI Corporate Finance     

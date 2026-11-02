@@ -1,0 +1,3392 @@
+{
+  "suppliers": [
+    {
+      "id": 1,
+      "name": "Sharma Traders Pvt Ltd",
+      "email": "billing@sharmatraders.in",
+      "phone": "+91 98110 12345",
+      "address": "12 Chandni Chowk Commercial Complex, Delhi 110006",
+      "gstin": "07AAAAA1234A1Z5",
+      "payment_terms_days": 30
+    },
+    {
+      "id": 2,
+      "name": "Patel Enterprises",
+      "email": "accounts@patelenterprise.in",
+      "phone": "+91 98250 23456",
+      "address": "45 Ashram Road, Navrangpura, Ahmedabad, Gujarat 380009",
+      "gstin": "24BBBBB5678B2Z6",
+      "payment_terms_days": 30
+    },
+    {
+      "id": 3,
+      "name": "Reddy Logistics & Supplies",
+      "email": "finance@reddylogistics.in",
+      "phone": "+91 98480 34567",
+      "address": "88 Cyber Towers, Madhapur, Hyderabad, Telangana 500081",
+      "gstin": "36CCCCC9012C3Z7",
+      "payment_terms_days": 45
+    },
+    {
+      "id": 4,
+      "name": "Gupta Stationery & Tech",
+      "email": "orders@guptastationery.in",
+      "phone": "+91 98390 45678",
+      "address": "23 Hazratganj Plaza, Lucknow, Uttar Pradesh 226001",
+      "gstin": "09DDDDD3456D4Z8",
+      "payment_terms_days": 30
+    },
+    {
+      "id": 5,
+      "name": "Nair Office Solutions",
+      "email": "billing@nairoffice.in",
+      "phone": "+91 98470 56789",
+      "address": "14 MG Road, Ernakulam, Kochi, Kerala 682016",
+      "gstin": "32EEEEE7890E5Z9",
+      "payment_terms_days": 30
+    },
+    {
+      "id": 6,
+      "name": "Chatterjee Commercials",
+      "email": "sales@chatterjeecomm.in",
+      "phone": "+91 98310 67890",
+      "address": "5 Park Street, Chowringhee, Kolkata, West Bengal 700016",
+      "gstin": "19FFFFF1234F6Z1",
+      "payment_terms_days": 45
+    },
+    {
+      "id": 7,
+      "name": "Mehta Industrial Goods",
+      "email": "invoices@mehtaindustrial.in",
+      "phone": "+91 98200 78901",
+      "address": "77 Nariman Point, Marine Drive, Mumbai, Maharashtra 400021",
+      "gstin": "27GGGGG5678G7Z2",
+      "payment_terms_days": 30
+    },
+    {
+      "id": 8,
+      "name": "Singh & Sons Equipment",
+      "email": "accounts@singhandsons.in",
+      "phone": "+91 98140 89012",
+      "address": "19 Focal Point, GT Road, Ludhiana, Punjab 141010",
+      "gstin": "03HHHHH9012H8Z3",
+      "payment_terms_days": 60
+    }
+  ],
+  "products": [
+    {
+      "name": "Ergonomic Office Chair",
+      "agreed_price": 4500.0
+    },
+    {
+      "name": "Standing Desk 120cm",
+      "agreed_price": 12000.0
+    },
+    {
+      "name": "Wireless Keyboard & Mouse Combo",
+      "agreed_price": 1500.0
+    },
+    {
+      "name": "24-inch IPS Monitor",
+      "agreed_price": 8500.0
+    },
+    {
+      "name": "High-Speed USB-C Dock",
+      "agreed_price": 3200.0
+    },
+    {
+      "name": "A4 Copier Paper (Box of 5 Reams)",
+      "agreed_price": 1100.0
+    },
+    {
+      "name": "Cat6 Network Cable (305m Roll)",
+      "agreed_price": 4200.0
+    },
+    {
+      "name": "Industrial Surge Protector Strip",
+      "agreed_price": 1800.0
+    },
+    {
+      "name": "HD 1080p Video Conferencing Webcam",
+      "agreed_price": 2600.0
+    },
+    {
+      "name": "Active Noise-Cancelling Headset",
+      "agreed_price": 3800.0
+    }
+  ],
+  "purchase_orders": [
+    {
+      "id": 1,
+      "po_number": "PO-2026-0001",
+      "supplier_id": 1,
+      "order_date": "2026-01-07",
+      "status": "issued",
+      "total_amount": 381848.0,
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 19,
+          "unit_price": 12000.0,
+          "total_price": 228000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 11,
+          "unit_price": 4200.0,
+          "total_price": 46200.0
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 13,
+          "unit_price": 3800.0,
+          "total_price": 49400.0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "po_number": "PO-2026-0002",
+      "supplier_id": 2,
+      "order_date": "2026-01-09",
+      "status": "issued",
+      "total_amount": 267270.0,
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 9,
+          "unit_price": 8500.0,
+          "total_price": 76500.0
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 11,
+          "unit_price": 12000.0,
+          "total_price": 132000.0
+        },
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 4,
+          "unit_price": 4500.0,
+          "total_price": 18000.0
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "po_number": "PO-2026-0003",
+      "supplier_id": 3,
+      "order_date": "2026-01-11",
+      "status": "issued",
+      "total_amount": 198240.0,
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 14,
+          "unit_price": 12000.0,
+          "total_price": 168000.0
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "po_number": "PO-2026-0004",
+      "supplier_id": 4,
+      "order_date": "2026-01-13",
+      "status": "issued",
+      "total_amount": 31742.0,
+      "items": [
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 7,
+          "unit_price": 1800.0,
+          "total_price": 12600.0
+        },
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 13,
+          "unit_price": 1100.0,
+          "total_price": 14300.0
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "po_number": "PO-2026-0005",
+      "supplier_id": 5,
+      "order_date": "2026-01-15",
+      "status": "issued",
+      "total_amount": 66552.0,
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 4,
+          "unit_price": 8500.0,
+          "total_price": 34000.0
+        },
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 7,
+          "unit_price": 3200.0,
+          "total_price": 22400.0
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "po_number": "PO-2026-0006",
+      "supplier_id": 6,
+      "order_date": "2026-01-17",
+      "status": "issued",
+      "total_amount": 198476.0,
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 14,
+          "unit_price": 8500.0,
+          "total_price": 119000.0
+        },
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 10,
+          "unit_price": 1500.0,
+          "total_price": 15000.0
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 19,
+          "unit_price": 1800.0,
+          "total_price": 34200.0
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "po_number": "PO-2026-0007",
+      "supplier_id": 7,
+      "order_date": "2026-01-19",
+      "status": "issued",
+      "total_amount": 3894.0,
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 3,
+          "unit_price": 1100.0,
+          "total_price": 3300.0
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "po_number": "PO-2026-0008",
+      "supplier_id": 8,
+      "order_date": "2026-01-21",
+      "status": "issued",
+      "total_amount": 63720.0,
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 12,
+          "unit_price": 4500.0,
+          "total_price": 54000.0
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "po_number": "PO-2026-0009",
+      "supplier_id": 1,
+      "order_date": "2026-01-23",
+      "status": "issued",
+      "total_amount": 313408.0,
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 8,
+          "unit_price": 3200.0,
+          "total_price": 25600.0
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 20,
+          "unit_price": 12000.0,
+          "total_price": 240000.0
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "po_number": "PO-2026-0010",
+      "supplier_id": 2,
+      "order_date": "2026-01-25",
+      "status": "issued",
+      "total_amount": 191396.0,
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 14,
+          "unit_price": 1100.0,
+          "total_price": 15400.0
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 16,
+          "unit_price": 8500.0,
+          "total_price": 136000.0
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 6,
+          "unit_price": 1800.0,
+          "total_price": 10800.0
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "po_number": "PO-2026-0011",
+      "supplier_id": 3,
+      "order_date": "2026-01-27",
+      "status": "issued",
+      "total_amount": 224200.0,
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 19,
+          "unit_price": 1500.0,
+          "total_price": 28500.0
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 19,
+          "unit_price": 8500.0,
+          "total_price": 161500.0
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "po_number": "PO-2026-0012",
+      "supplier_id": 4,
+      "order_date": "2026-01-29",
+      "status": "issued",
+      "total_amount": 159064.0,
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 20,
+          "unit_price": 3800.0,
+          "total_price": 76000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 14,
+          "unit_price": 4200.0,
+          "total_price": 58800.0
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "po_number": "PO-2026-0013",
+      "supplier_id": 5,
+      "order_date": "2026-01-31",
+      "status": "issued",
+      "total_amount": 210630.0,
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 18,
+          "unit_price": 8500.0,
+          "total_price": 153000.0
+        },
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 17,
+          "unit_price": 1500.0,
+          "total_price": 25500.0
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "po_number": "PO-2026-0014",
+      "supplier_id": 6,
+      "order_date": "2026-02-02",
+      "status": "issued",
+      "total_amount": 26550.0,
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 5,
+          "unit_price": 4500.0,
+          "total_price": 22500.0
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "po_number": "PO-2026-0015",
+      "supplier_id": 7,
+      "order_date": "2026-02-04",
+      "status": "issued",
+      "total_amount": 26550.0,
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 15,
+          "unit_price": 1500.0,
+          "total_price": 22500.0
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "po_number": "PO-2026-0016",
+      "supplier_id": 8,
+      "order_date": "2026-02-06",
+      "status": "issued",
+      "total_amount": 346448.0,
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 16,
+          "unit_price": 12000.0,
+          "total_price": 192000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 18,
+          "unit_price": 4200.0,
+          "total_price": 75600.0
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 10,
+          "unit_price": 2600.0,
+          "total_price": 26000.0
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "po_number": "PO-2026-0017",
+      "supplier_id": 1,
+      "order_date": "2026-02-08",
+      "status": "issued",
+      "total_amount": 176056.0,
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 12,
+          "unit_price": 4500.0,
+          "total_price": 54000.0
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 5,
+          "unit_price": 12000.0,
+          "total_price": 60000.0
+        },
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 11,
+          "unit_price": 3200.0,
+          "total_price": 35200.0
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "po_number": "PO-2026-0018",
+      "supplier_id": 2,
+      "order_date": "2026-02-10",
+      "status": "issued",
+      "total_amount": 24780.0,
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 2,
+          "unit_price": 1500.0,
+          "total_price": 3000.0
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 10,
+          "unit_price": 1800.0,
+          "total_price": 18000.0
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "po_number": "PO-2026-0019",
+      "supplier_id": 3,
+      "order_date": "2026-02-12",
+      "status": "issued",
+      "total_amount": 187974.0,
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 11,
+          "unit_price": 1500.0,
+          "total_price": 16500.0
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 18,
+          "unit_price": 2600.0,
+          "total_price": 46800.0
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 8,
+          "unit_price": 12000.0,
+          "total_price": 96000.0
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "po_number": "PO-2026-0020",
+      "supplier_id": 4,
+      "order_date": "2026-02-14",
+      "status": "issued",
+      "total_amount": 9086.0,
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 7,
+          "unit_price": 1100.0,
+          "total_price": 7700.0
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "po_number": "PO-2026-0021",
+      "supplier_id": 5,
+      "order_date": "2026-02-16",
+      "status": "issued",
+      "total_amount": 69266.0,
+      "items": [
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 17,
+          "unit_price": 2600.0,
+          "total_price": 44200.0
+        },
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 2,
+          "unit_price": 4500.0,
+          "total_price": 9000.0
+        },
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 5,
+          "unit_price": 1100.0,
+          "total_price": 5500.0
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "po_number": "PO-2026-0022",
+      "supplier_id": 6,
+      "order_date": "2026-02-18",
+      "status": "issued",
+      "total_amount": 101598.0,
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 3,
+          "unit_price": 3200.0,
+          "total_price": 9600.0
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 9,
+          "unit_price": 8500.0,
+          "total_price": 76500.0
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "po_number": "PO-2026-0023",
+      "supplier_id": 7,
+      "order_date": "2026-02-20",
+      "status": "issued",
+      "total_amount": 154580.0,
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 4,
+          "unit_price": 12000.0,
+          "total_price": 48000.0
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 19,
+          "unit_price": 3800.0,
+          "total_price": 72200.0
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 6,
+          "unit_price": 1800.0,
+          "total_price": 10800.0
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "po_number": "PO-2026-0024",
+      "supplier_id": 8,
+      "order_date": "2026-02-22",
+      "status": "issued",
+      "total_amount": 40356.0,
+      "items": [
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 19,
+          "unit_price": 1800.0,
+          "total_price": 34200.0
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "po_number": "PO-2026-0025",
+      "supplier_id": 1,
+      "order_date": "2026-02-24",
+      "status": "issued",
+      "total_amount": 67968.0,
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 18,
+          "unit_price": 3200.0,
+          "total_price": 57600.0
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "po_number": "PO-2026-0026",
+      "supplier_id": 2,
+      "order_date": "2026-02-26",
+      "status": "issued",
+      "total_amount": 234820.0,
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 11,
+          "unit_price": 4200.0,
+          "total_price": 46200.0
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 14,
+          "unit_price": 8500.0,
+          "total_price": 119000.0
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 13,
+          "unit_price": 2600.0,
+          "total_price": 33800.0
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "po_number": "PO-2026-0027",
+      "supplier_id": 3,
+      "order_date": "2026-02-28",
+      "status": "issued",
+      "total_amount": 34456.0,
+      "items": [
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 5,
+          "unit_price": 2600.0,
+          "total_price": 13000.0
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 9,
+          "unit_price": 1800.0,
+          "total_price": 16200.0
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "po_number": "PO-2026-0028",
+      "supplier_id": 4,
+      "order_date": "2026-03-02",
+      "status": "issued",
+      "total_amount": 169920.0,
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 12,
+          "unit_price": 12000.0,
+          "total_price": 144000.0
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "po_number": "PO-2026-0029",
+      "supplier_id": 5,
+      "order_date": "2026-03-04",
+      "status": "issued",
+      "total_amount": 85196.0,
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 19,
+          "unit_price": 3800.0,
+          "total_price": 72200.0
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "po_number": "PO-2026-0030",
+      "supplier_id": 6,
+      "order_date": "2026-03-06",
+      "status": "issued",
+      "total_amount": 40356.0,
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 9,
+          "unit_price": 3800.0,
+          "total_price": 34200.0
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "po_number": "PO-2026-0031",
+      "supplier_id": 7,
+      "order_date": "2026-03-08",
+      "status": "issued",
+      "total_amount": 42480.0,
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 3,
+          "unit_price": 12000.0,
+          "total_price": 36000.0
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "po_number": "PO-2026-0032",
+      "supplier_id": 8,
+      "order_date": "2026-03-10",
+      "status": "issued",
+      "total_amount": 42480.0,
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 3,
+          "unit_price": 12000.0,
+          "total_price": 36000.0
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "po_number": "PO-2026-0033",
+      "supplier_id": 1,
+      "order_date": "2026-03-12",
+      "status": "issued",
+      "total_amount": 158120.0,
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 9,
+          "unit_price": 12000.0,
+          "total_price": 108000.0
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 10,
+          "unit_price": 2600.0,
+          "total_price": 26000.0
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "po_number": "PO-2026-0034",
+      "supplier_id": 2,
+      "order_date": "2026-03-14",
+      "status": "issued",
+      "total_amount": 273170.0,
+      "items": [
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 20,
+          "unit_price": 1800.0,
+          "total_price": 36000.0
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 20,
+          "unit_price": 8500.0,
+          "total_price": 170000.0
+        },
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 17,
+          "unit_price": 1500.0,
+          "total_price": 25500.0
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "po_number": "PO-2026-0035",
+      "supplier_id": 3,
+      "order_date": "2026-03-16",
+      "status": "issued",
+      "total_amount": 31860.0,
+      "items": [
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 15,
+          "unit_price": 1800.0,
+          "total_price": 27000.0
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "po_number": "PO-2026-0036",
+      "supplier_id": 4,
+      "order_date": "2026-03-18",
+      "status": "issued",
+      "total_amount": 70800.0,
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 5,
+          "unit_price": 12000.0,
+          "total_price": 60000.0
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "po_number": "PO-2026-0037",
+      "supplier_id": 5,
+      "order_date": "2026-03-20",
+      "status": "issued",
+      "total_amount": 108560.0,
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 15,
+          "unit_price": 4200.0,
+          "total_price": 63000.0
+        },
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 16,
+          "unit_price": 1100.0,
+          "total_price": 17600.0
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 3,
+          "unit_price": 3800.0,
+          "total_price": 11400.0
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "po_number": "PO-2026-0038",
+      "supplier_id": 6,
+      "order_date": "2026-03-22",
+      "status": "issued",
+      "total_amount": 241074.0,
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 12,
+          "unit_price": 12000.0,
+          "total_price": 144000.0
+        },
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 5,
+          "unit_price": 4500.0,
+          "total_price": 22500.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 9,
+          "unit_price": 4200.0,
+          "total_price": 37800.0
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "po_number": "PO-2026-0039",
+      "supplier_id": 7,
+      "order_date": "2026-03-24",
+      "status": "issued",
+      "total_amount": 190570.0,
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 19,
+          "unit_price": 8500.0,
+          "total_price": 161500.0
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "po_number": "PO-2026-0040",
+      "supplier_id": 8,
+      "order_date": "2026-03-26",
+      "status": "issued",
+      "total_amount": 61950.0,
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 7,
+          "unit_price": 1500.0,
+          "total_price": 10500.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 10,
+          "unit_price": 4200.0,
+          "total_price": 42000.0
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "po_number": "PO-2026-0041",
+      "supplier_id": 1,
+      "order_date": "2026-03-28",
+      "status": "issued",
+      "total_amount": 429520.0,
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 16,
+          "unit_price": 8500.0,
+          "total_price": 136000.0
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 19,
+          "unit_price": 12000.0,
+          "total_price": 228000.0
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "po_number": "PO-2026-0042",
+      "supplier_id": 2,
+      "order_date": "2026-03-30",
+      "status": "issued",
+      "total_amount": 100890.0,
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 19,
+          "unit_price": 4500.0,
+          "total_price": 85500.0
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "po_number": "PO-2026-0043",
+      "supplier_id": 3,
+      "order_date": "2026-04-01",
+      "status": "issued",
+      "total_amount": 127440.0,
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 9,
+          "unit_price": 12000.0,
+          "total_price": 108000.0
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "po_number": "PO-2026-0044",
+      "supplier_id": 4,
+      "order_date": "2026-04-03",
+      "status": "issued",
+      "total_amount": 84252.0,
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 17,
+          "unit_price": 4200.0,
+          "total_price": 71400.0
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "po_number": "PO-2026-0045",
+      "supplier_id": 5,
+      "order_date": "2026-04-05",
+      "status": "issued",
+      "total_amount": 64782.0,
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 3,
+          "unit_price": 8500.0,
+          "total_price": 25500.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 7,
+          "unit_price": 4200.0,
+          "total_price": 29400.0
+        }
+      ]
+    },
+    {
+      "id": 46,
+      "po_number": "PO-2026-0046",
+      "supplier_id": 6,
+      "order_date": "2026-04-07",
+      "status": "issued",
+      "total_amount": 132396.0,
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 10,
+          "unit_price": 4500.0,
+          "total_price": 45000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 16,
+          "unit_price": 4200.0,
+          "total_price": 67200.0
+        }
+      ]
+    },
+    {
+      "id": 47,
+      "po_number": "PO-2026-0047",
+      "supplier_id": 7,
+      "order_date": "2026-04-09",
+      "status": "issued",
+      "total_amount": 102660.0,
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 17,
+          "unit_price": 4200.0,
+          "total_price": 71400.0
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 6,
+          "unit_price": 2600.0,
+          "total_price": 15600.0
+        }
+      ]
+    },
+    {
+      "id": 48,
+      "po_number": "PO-2026-0048",
+      "supplier_id": 8,
+      "order_date": "2026-04-11",
+      "status": "issued",
+      "total_amount": 30208.0,
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 8,
+          "unit_price": 3200.0,
+          "total_price": 25600.0
+        }
+      ]
+    },
+    {
+      "id": 49,
+      "po_number": "PO-2026-0049",
+      "supplier_id": 1,
+      "order_date": "2026-04-13",
+      "status": "issued",
+      "total_amount": 85196.0,
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 19,
+          "unit_price": 3800.0,
+          "total_price": 72200.0
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "po_number": "PO-2026-0050",
+      "supplier_id": 2,
+      "order_date": "2026-04-15",
+      "status": "issued",
+      "total_amount": 3894.0,
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 3,
+          "unit_price": 1100.0,
+          "total_price": 3300.0
+        }
+      ]
+    }
+  ],
+  "goods_received_notes": [
+    {
+      "id": 1,
+      "grn_number": "GRN-2026-0001",
+      "po_id": 1,
+      "received_date": "2026-01-10",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 19
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity_received": 11
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity_received": 13
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "grn_number": "GRN-2026-0002",
+      "po_id": 2,
+      "received_date": "2026-01-12",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 9
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 11
+        },
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity_received": 4
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "grn_number": "GRN-2026-0003",
+      "po_id": 3,
+      "received_date": "2026-01-14",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 14
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "grn_number": "GRN-2026-0004",
+      "po_id": 4,
+      "received_date": "2026-01-16",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity_received": 7
+        },
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity_received": 13
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "grn_number": "GRN-2026-0005",
+      "po_id": 5,
+      "received_date": "2026-01-18",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 4
+        },
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity_received": 7
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "grn_number": "GRN-2026-0006",
+      "po_id": 6,
+      "received_date": "2026-01-20",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 14
+        },
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity_received": 10
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity_received": 19
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "grn_number": "GRN-2026-0007",
+      "po_id": 7,
+      "received_date": "2026-01-22",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity_received": 3
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "grn_number": "GRN-2026-0008",
+      "po_id": 8,
+      "received_date": "2026-01-24",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity_received": 12
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "grn_number": "GRN-2026-0009",
+      "po_id": 9,
+      "received_date": "2026-01-26",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity_received": 8
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 20
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "grn_number": "GRN-2026-0010",
+      "po_id": 10,
+      "received_date": "2026-01-28",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity_received": 14
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 16
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity_received": 6
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "grn_number": "GRN-2026-0011",
+      "po_id": 11,
+      "received_date": "2026-01-30",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity_received": 19
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 19
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "grn_number": "GRN-2026-0012",
+      "po_id": 12,
+      "received_date": "2026-02-01",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity_received": 20
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity_received": 14
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "grn_number": "GRN-2026-0013",
+      "po_id": 13,
+      "received_date": "2026-02-03",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 18
+        },
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity_received": 17
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "grn_number": "GRN-2026-0014",
+      "po_id": 14,
+      "received_date": "2026-02-05",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity_received": 5
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "grn_number": "GRN-2026-0015",
+      "po_id": 15,
+      "received_date": "2026-02-07",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity_received": 15
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "grn_number": "GRN-2026-0016",
+      "po_id": 16,
+      "received_date": "2026-02-09",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 16
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity_received": 18
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity_received": 10
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "grn_number": "GRN-2026-0017",
+      "po_id": 17,
+      "received_date": "2026-02-11",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity_received": 12
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 5
+        },
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity_received": 11
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "grn_number": "GRN-2026-0018",
+      "po_id": 18,
+      "received_date": "2026-02-13",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity_received": 2
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity_received": 10
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "grn_number": "GRN-2026-0019",
+      "po_id": 19,
+      "received_date": "2026-02-15",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity_received": 11
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity_received": 18
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 8
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "grn_number": "GRN-2026-0020",
+      "po_id": 20,
+      "received_date": "2026-02-17",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity_received": 7
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "grn_number": "GRN-2026-0021",
+      "po_id": 21,
+      "received_date": "2026-02-19",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity_received": 17
+        },
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity_received": 2
+        },
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity_received": 5
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "grn_number": "GRN-2026-0022",
+      "po_id": 22,
+      "received_date": "2026-02-21",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity_received": 3
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 9
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "grn_number": "GRN-2026-0023",
+      "po_id": 23,
+      "received_date": "2026-02-23",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 4
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity_received": 19
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity_received": 6
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "grn_number": "GRN-2026-0024",
+      "po_id": 24,
+      "received_date": "2026-02-25",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity_received": 19
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "grn_number": "GRN-2026-0025",
+      "po_id": 25,
+      "received_date": "2026-02-27",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity_received": 18
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "grn_number": "GRN-2026-0026",
+      "po_id": 26,
+      "received_date": "2026-03-01",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity_received": 11
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 14
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity_received": 13
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "grn_number": "GRN-2026-0027",
+      "po_id": 27,
+      "received_date": "2026-03-03",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity_received": 5
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity_received": 9
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "grn_number": "GRN-2026-0028",
+      "po_id": 28,
+      "received_date": "2026-03-05",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 12
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "grn_number": "GRN-2026-0029",
+      "po_id": 29,
+      "received_date": "2026-03-07",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity_received": 19
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "grn_number": "GRN-2026-0030",
+      "po_id": 30,
+      "received_date": "2026-03-09",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity_received": 9
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "grn_number": "GRN-2026-0031",
+      "po_id": 31,
+      "received_date": "2026-03-11",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 3
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "grn_number": "GRN-2026-0032",
+      "po_id": 32,
+      "received_date": "2026-03-13",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 3
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "grn_number": "GRN-2026-0033",
+      "po_id": 33,
+      "received_date": "2026-03-15",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 9
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity_received": 10
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "grn_number": "GRN-2026-0034",
+      "po_id": 34,
+      "received_date": "2026-03-17",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity_received": 20
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 20
+        },
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity_received": 17
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "grn_number": "GRN-2026-0035",
+      "po_id": 35,
+      "received_date": "2026-03-19",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity_received": 15
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "grn_number": "GRN-2026-0036",
+      "po_id": 36,
+      "received_date": "2026-03-21",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 5
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "grn_number": "GRN-2026-0037",
+      "po_id": 37,
+      "received_date": "2026-03-23",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity_received": 15
+        },
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity_received": 16
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity_received": 3
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "grn_number": "GRN-2026-0038",
+      "po_id": 38,
+      "received_date": "2026-03-25",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 12
+        },
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity_received": 5
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity_received": 9
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "grn_number": "GRN-2026-0039",
+      "po_id": 39,
+      "received_date": "2026-03-27",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 19
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "grn_number": "GRN-2026-0040",
+      "po_id": 40,
+      "received_date": "2026-03-29",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity_received": 7
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity_received": 10
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "grn_number": "GRN-2026-0041",
+      "po_id": 41,
+      "received_date": "2026-03-31",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 16
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 19
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "grn_number": "GRN-2026-0042",
+      "po_id": 42,
+      "received_date": "2026-04-02",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity_received": 19
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "grn_number": "GRN-2026-0043",
+      "po_id": 43,
+      "received_date": "2026-04-04",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity_received": 9
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "grn_number": "GRN-2026-0044",
+      "po_id": 44,
+      "received_date": "2026-04-06",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity_received": 17
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "grn_number": "GRN-2026-0045",
+      "po_id": 45,
+      "received_date": "2026-04-08",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity_received": 3
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity_received": 7
+        }
+      ]
+    },
+    {
+      "id": 46,
+      "grn_number": "GRN-2026-0046",
+      "po_id": 46,
+      "received_date": "2026-04-10",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity_received": 10
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity_received": 16
+        }
+      ]
+    },
+    {
+      "id": 47,
+      "grn_number": "GRN-2026-0047",
+      "po_id": 47,
+      "received_date": "2026-04-12",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity_received": 17
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity_received": 6
+        }
+      ]
+    },
+    {
+      "id": 48,
+      "grn_number": "GRN-2026-0048",
+      "po_id": 48,
+      "received_date": "2026-04-14",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity_received": 8
+        }
+      ]
+    },
+    {
+      "id": 49,
+      "grn_number": "GRN-2026-0049",
+      "po_id": 49,
+      "received_date": "2026-04-16",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity_received": 19
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "grn_number": "GRN-2026-0050",
+      "po_id": 50,
+      "received_date": "2026-04-18",
+      "received_by": "Ramesh Kumar (Warehouse Supv)",
+      "remarks": "Received in good condition",
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity_received": 3
+        }
+      ]
+    }
+  ],
+  "invoices": [
+    {
+      "id": 1,
+      "invoice_number": "INV-2026-0001",
+      "supplier_id": 1,
+      "po_id": 1,
+      "invoice_date": "2026-01-12",
+      "due_date": "2026-02-11",
+      "subtotal": 323600.0,
+      "tax_amount": 58248.0,
+      "grand_total": 381848.0,
+      "file_path": "data/invoices/INV_001.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 19,
+          "unit_price": 12000.0,
+          "total_price": 228000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 11,
+          "unit_price": 4200.0,
+          "total_price": 46200.0
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 13,
+          "unit_price": 3800.0,
+          "total_price": 49400.0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "invoice_number": "INV-2026-0002",
+      "supplier_id": 2,
+      "po_id": 2,
+      "invoice_date": "2026-01-14",
+      "due_date": "2026-02-13",
+      "subtotal": 226500.0,
+      "tax_amount": 40770.0,
+      "grand_total": 267270.0,
+      "file_path": "data/invoices/INV_002.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 9,
+          "unit_price": 8500.0,
+          "total_price": 76500.0
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 11,
+          "unit_price": 12000.0,
+          "total_price": 132000.0
+        },
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 4,
+          "unit_price": 4500.0,
+          "total_price": 18000.0
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "invoice_number": "INV-2026-0003",
+      "supplier_id": 3,
+      "po_id": 3,
+      "invoice_date": "2026-01-16",
+      "due_date": "2026-03-02",
+      "subtotal": 168000.0,
+      "tax_amount": 30240.0,
+      "grand_total": 198240.0,
+      "file_path": "data/invoices/INV_003.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 14,
+          "unit_price": 12000.0,
+          "total_price": 168000.0
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "invoice_number": "INV-2026-0004",
+      "supplier_id": 4,
+      "po_id": 4,
+      "invoice_date": "2026-01-18",
+      "due_date": "2026-02-17",
+      "subtotal": 26900.0,
+      "tax_amount": 4842.0,
+      "grand_total": 31742.0,
+      "file_path": "data/invoices/INV_004.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 7,
+          "unit_price": 1800.0,
+          "total_price": 12600.0
+        },
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 13,
+          "unit_price": 1100.0,
+          "total_price": 14300.0
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "invoice_number": "INV-2026-0005",
+      "supplier_id": 5,
+      "po_id": 5,
+      "invoice_date": "2026-01-20",
+      "due_date": "2026-02-19",
+      "subtotal": 56400.0,
+      "tax_amount": 10152.0,
+      "grand_total": 66552.0,
+      "file_path": "data/invoices/INV_005.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 4,
+          "unit_price": 8500.0,
+          "total_price": 34000.0
+        },
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 7,
+          "unit_price": 3200.0,
+          "total_price": 22400.0
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "invoice_number": "INV-2026-0001",
+      "supplier_id": 6,
+      "po_id": 6,
+      "invoice_date": "2026-01-22",
+      "due_date": "2026-03-08",
+      "subtotal": 323600.0,
+      "tax_amount": 58248.0,
+      "grand_total": 381848.0,
+      "file_path": "data/invoices/INV_006.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "duplicate_invoice",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 19,
+          "unit_price": 12000.0,
+          "total_price": 228000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 11,
+          "unit_price": 4200.0,
+          "total_price": 46200.0
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 13,
+          "unit_price": 3800.0,
+          "total_price": 49400.0
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "invoice_number": "INV-2026-0007",
+      "supplier_id": 7,
+      "po_id": 7,
+      "invoice_date": "2026-01-24",
+      "due_date": "2026-02-23",
+      "subtotal": 3300.0,
+      "tax_amount": 594.0,
+      "grand_total": 3894.0,
+      "file_path": "data/invoices/INV_007.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 3,
+          "unit_price": 1100.0,
+          "total_price": 3300.0
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "invoice_number": "INV-2026-0008",
+      "supplier_id": 8,
+      "po_id": 8,
+      "invoice_date": "2026-01-26",
+      "due_date": "2026-03-27",
+      "subtotal": 54000.0,
+      "tax_amount": 9720.0,
+      "grand_total": 63720.0,
+      "file_path": "data/invoices/INV_008.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 12,
+          "unit_price": 4500.0,
+          "total_price": 54000.0
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "invoice_number": "INV-2026-0009",
+      "supplier_id": 1,
+      "po_id": 9,
+      "invoice_date": "2026-01-28",
+      "due_date": "2026-02-27",
+      "subtotal": 265600.0,
+      "tax_amount": 47808.0,
+      "grand_total": 313408.0,
+      "file_path": "data/invoices/INV_009.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 8,
+          "unit_price": 3200.0,
+          "total_price": 25600.0
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 20,
+          "unit_price": 12000.0,
+          "total_price": 240000.0
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "invoice_number": "INV-2026-0010",
+      "supplier_id": 2,
+      "po_id": 10,
+      "invoice_date": "2026-01-30",
+      "due_date": "2026-03-01",
+      "subtotal": 162200.0,
+      "tax_amount": 29196.0,
+      "grand_total": 191396.0,
+      "file_path": "data/invoices/INV_010.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 14,
+          "unit_price": 1100.0,
+          "total_price": 15400.0
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 16,
+          "unit_price": 8500.0,
+          "total_price": 136000.0
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 6,
+          "unit_price": 1800.0,
+          "total_price": 10800.0
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "invoice_number": "INV-2026-0011",
+      "supplier_id": 3,
+      "po_id": 11,
+      "invoice_date": "2026-02-01",
+      "due_date": "2026-03-18",
+      "subtotal": 190000.0,
+      "tax_amount": 34200.0,
+      "grand_total": 224200.0,
+      "file_path": "data/invoices/INV_011.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 19,
+          "unit_price": 1500.0,
+          "total_price": 28500.0
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 19,
+          "unit_price": 8500.0,
+          "total_price": 161500.0
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "invoice_number": "INV-2026-0012",
+      "supplier_id": 4,
+      "po_id": 12,
+      "invoice_date": "2026-02-03",
+      "due_date": "2026-03-05",
+      "subtotal": 134800.0,
+      "tax_amount": 24264.0,
+      "grand_total": 159064.0,
+      "file_path": "data/invoices/INV_012.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 20,
+          "unit_price": 3800.0,
+          "total_price": 76000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 14,
+          "unit_price": 4200.0,
+          "total_price": 58800.0
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "invoice_number": "INV-2026-0013",
+      "supplier_id": 5,
+      "po_id": 13,
+      "invoice_date": "2026-02-05",
+      "due_date": "2026-03-07",
+      "subtotal": 178500.0,
+      "tax_amount": 32130.0,
+      "grand_total": 210630.0,
+      "file_path": "data/invoices/INV_013.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 18,
+          "unit_price": 8500.0,
+          "total_price": 153000.0
+        },
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 17,
+          "unit_price": 1500.0,
+          "total_price": 25500.0
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "invoice_number": "INV-2026-0014",
+      "supplier_id": 6,
+      "po_id": 14,
+      "invoice_date": "2026-02-07",
+      "due_date": "2026-03-24",
+      "subtotal": 22500.0,
+      "tax_amount": 4050.0,
+      "grand_total": 26550.0,
+      "file_path": "data/invoices/INV_014.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 5,
+          "unit_price": 4500.0,
+          "total_price": 22500.0
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "invoice_number": "INV-2026-0015",
+      "supplier_id": 7,
+      "po_id": 15,
+      "invoice_date": "2026-02-09",
+      "due_date": "2026-03-11",
+      "subtotal": 30000.0,
+      "tax_amount": 5400.0,
+      "grand_total": 35400.0,
+      "file_path": "data/invoices/INV_015.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "quantity_mismatch",
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 20,
+          "unit_price": 1500.0,
+          "total_price": 30000.0
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "invoice_number": "INV-2026-0016",
+      "supplier_id": 8,
+      "po_id": 16,
+      "invoice_date": "2026-02-11",
+      "due_date": "2026-04-12",
+      "subtotal": 353600.0,
+      "tax_amount": 63648.0,
+      "grand_total": 417248.0,
+      "file_path": "data/invoices/INV_016.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "quantity_mismatch",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 21,
+          "unit_price": 12000.0,
+          "total_price": 252000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 18,
+          "unit_price": 4200.0,
+          "total_price": 75600.0
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 10,
+          "unit_price": 2600.0,
+          "total_price": 26000.0
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "invoice_number": "INV-2026-0017",
+      "supplier_id": 1,
+      "po_id": 17,
+      "invoice_date": "2026-02-13",
+      "due_date": "2026-03-15",
+      "subtotal": 149200.0,
+      "tax_amount": 26856.0,
+      "grand_total": 176056.0,
+      "file_path": "data/invoices/INV_017.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 12,
+          "unit_price": 4500.0,
+          "total_price": 54000.0
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 5,
+          "unit_price": 12000.0,
+          "total_price": 60000.0
+        },
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 11,
+          "unit_price": 3200.0,
+          "total_price": 35200.0
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "invoice_number": "INV-2026-0018",
+      "supplier_id": 2,
+      "po_id": 18,
+      "invoice_date": "2026-02-15",
+      "due_date": "2026-03-17",
+      "subtotal": 21000.0,
+      "tax_amount": 3780.0,
+      "grand_total": 24780.0,
+      "file_path": "data/invoices/INV_018.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 2,
+          "unit_price": 1500.0,
+          "total_price": 3000.0
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 10,
+          "unit_price": 1800.0,
+          "total_price": 18000.0
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "invoice_number": "INV-2026-0019",
+      "supplier_id": 3,
+      "po_id": 19,
+      "invoice_date": "2026-02-17",
+      "due_date": "2026-04-03",
+      "subtotal": 164800.0,
+      "tax_amount": 29664.0,
+      "grand_total": 194464.0,
+      "file_path": "data/invoices/INV_019.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "price_mismatch",
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 11,
+          "unit_price": 2000.0,
+          "total_price": 22000.0
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 18,
+          "unit_price": 2600.0,
+          "total_price": 46800.0
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 8,
+          "unit_price": 12000.0,
+          "total_price": 96000.0
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "invoice_number": "INV-2026-0020",
+      "supplier_id": 4,
+      "po_id": 20,
+      "invoice_date": "2026-02-19",
+      "due_date": "2026-03-21",
+      "subtotal": 7700.0,
+      "tax_amount": 1386.0,
+      "grand_total": 9086.0,
+      "file_path": "data/invoices/INV_020.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 7,
+          "unit_price": 1100.0,
+          "total_price": 7700.0
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "invoice_number": "INV-2026-0021",
+      "supplier_id": 5,
+      "po_id": 21,
+      "invoice_date": "2026-02-21",
+      "due_date": "2026-03-23",
+      "subtotal": 58700.0,
+      "tax_amount": 10566.0,
+      "grand_total": 70766.0,
+      "file_path": "data/invoices/INV_021.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "wrong_total",
+      "items": [
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 17,
+          "unit_price": 2600.0,
+          "total_price": 44200.0
+        },
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 2,
+          "unit_price": 4500.0,
+          "total_price": 9000.0
+        },
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 5,
+          "unit_price": 1100.0,
+          "total_price": 5500.0
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "invoice_number": "INV-2026-0022",
+      "supplier_id": 6,
+      "po_id": 22,
+      "invoice_date": "2026-02-23",
+      "due_date": "2026-04-09",
+      "subtotal": 86100.0,
+      "tax_amount": 15498.0,
+      "grand_total": 101598.0,
+      "file_path": "data/invoices/INV_022.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 3,
+          "unit_price": 3200.0,
+          "total_price": 9600.0
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 9,
+          "unit_price": 8500.0,
+          "total_price": 76500.0
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "invoice_number": "INV-2026-0023",
+      "supplier_id": 7,
+      "po_id": 23,
+      "invoice_date": "2026-02-25",
+      "due_date": "2026-03-27",
+      "subtotal": 131000.0,
+      "tax_amount": 23580.0,
+      "grand_total": 154580.0,
+      "file_path": "data/invoices/INV_023.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 4,
+          "unit_price": 12000.0,
+          "total_price": 48000.0
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 19,
+          "unit_price": 3800.0,
+          "total_price": 72200.0
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 6,
+          "unit_price": 1800.0,
+          "total_price": 10800.0
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "invoice_number": "INV-2026-0024",
+      "supplier_id": 8,
+      "po_id": null,
+      "invoice_date": "2026-02-27",
+      "due_date": "2026-04-28",
+      "subtotal": 34200.0,
+      "tax_amount": 6156.0,
+      "grand_total": 40356.0,
+      "file_path": "data/invoices/INV_024.pdf",
+      "status": "needs_review",
+      "mistake_type": "missing_po",
+      "items": [
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 19,
+          "unit_price": 1800.0,
+          "total_price": 34200.0
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "invoice_number": "INV-2026-0025",
+      "supplier_id": 1,
+      "po_id": 25,
+      "invoice_date": "2026-03-01",
+      "due_date": "2026-03-31",
+      "subtotal": 57600.0,
+      "tax_amount": 10368.0,
+      "grand_total": 69468.0,
+      "file_path": "data/invoices/INV_025.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "wrong_total",
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 18,
+          "unit_price": 3200.0,
+          "total_price": 57600.0
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "invoice_number": "INV-2026-0026",
+      "supplier_id": 2,
+      "po_id": 26,
+      "invoice_date": "2026-03-03",
+      "due_date": "2026-04-02",
+      "subtotal": 199000.0,
+      "tax_amount": 35820.0,
+      "grand_total": 234820.0,
+      "file_path": "data/invoices/INV_026.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 11,
+          "unit_price": 4200.0,
+          "total_price": 46200.0
+        },
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 14,
+          "unit_price": 8500.0,
+          "total_price": 119000.0
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 13,
+          "unit_price": 2600.0,
+          "total_price": 33800.0
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "invoice_number": "INV-2026-0027",
+      "supplier_id": 3,
+      "po_id": 27,
+      "invoice_date": "2026-03-05",
+      "due_date": "2026-04-19",
+      "subtotal": 29200.0,
+      "tax_amount": 5256.0,
+      "grand_total": 34456.0,
+      "file_path": "data/invoices/INV_027.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 5,
+          "unit_price": 2600.0,
+          "total_price": 13000.0
+        },
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 9,
+          "unit_price": 1800.0,
+          "total_price": 16200.0
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "invoice_number": "INV-2026-0028",
+      "supplier_id": 4,
+      "po_id": 28,
+      "invoice_date": "2026-03-07",
+      "due_date": "2026-04-06",
+      "subtotal": 144000.0,
+      "tax_amount": 25920.0,
+      "grand_total": 169920.0,
+      "file_path": "data/invoices/INV_028.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 12,
+          "unit_price": 12000.0,
+          "total_price": 144000.0
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "invoice_number": "INV-2026-0029",
+      "supplier_id": 5,
+      "po_id": 29,
+      "invoice_date": "2026-03-09",
+      "due_date": "2026-04-08",
+      "subtotal": 72200.0,
+      "tax_amount": 12996.0,
+      "grand_total": 85196.0,
+      "file_path": "data/invoices/INV_029.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 19,
+          "unit_price": 3800.0,
+          "total_price": 72200.0
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "invoice_number": "INV-2026-0030",
+      "supplier_id": 6,
+      "po_id": 30,
+      "invoice_date": "2026-03-11",
+      "due_date": "2026-04-25",
+      "subtotal": 34200.0,
+      "tax_amount": 6156.0,
+      "grand_total": 41856.0,
+      "file_path": "data/invoices/INV_030.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "wrong_total",
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 9,
+          "unit_price": 3800.0,
+          "total_price": 34200.0
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "invoice_number": "INV-2026-0001",
+      "supplier_id": 7,
+      "po_id": 31,
+      "invoice_date": "2026-03-13",
+      "due_date": "2026-04-12",
+      "subtotal": 323600.0,
+      "tax_amount": 58248.0,
+      "grand_total": 381848.0,
+      "file_path": "data/invoices/INV_031.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "duplicate_invoice",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 19,
+          "unit_price": 12000.0,
+          "total_price": 228000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 11,
+          "unit_price": 4200.0,
+          "total_price": 46200.0
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 13,
+          "unit_price": 3800.0,
+          "total_price": 49400.0
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "invoice_number": "INV-2026-0032",
+      "supplier_id": 8,
+      "po_id": 32,
+      "invoice_date": "2026-03-15",
+      "due_date": "2026-05-14",
+      "subtotal": 37500.0,
+      "tax_amount": 6750.0,
+      "grand_total": 44250.0,
+      "file_path": "data/invoices/INV_032.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "price_mismatch",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 3,
+          "unit_price": 12500.0,
+          "total_price": 37500.0
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "invoice_number": "INV-2026-0033",
+      "supplier_id": 1,
+      "po_id": 33,
+      "invoice_date": "2026-03-17",
+      "due_date": "2026-04-16",
+      "subtotal": 134000.0,
+      "tax_amount": 24120.0,
+      "grand_total": 158120.0,
+      "file_path": "data/invoices/INV_033.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 9,
+          "unit_price": 12000.0,
+          "total_price": 108000.0
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 10,
+          "unit_price": 2600.0,
+          "total_price": 26000.0
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "invoice_number": "INV-2026-0001",
+      "supplier_id": 2,
+      "po_id": 34,
+      "invoice_date": "2026-03-19",
+      "due_date": "2026-04-18",
+      "subtotal": 323600.0,
+      "tax_amount": 58248.0,
+      "grand_total": 381848.0,
+      "file_path": "data/invoices/INV_034.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "duplicate_invoice",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 19,
+          "unit_price": 12000.0,
+          "total_price": 228000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 11,
+          "unit_price": 4200.0,
+          "total_price": 46200.0
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 13,
+          "unit_price": 3800.0,
+          "total_price": 49400.0
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "invoice_number": "INV-2026-0035",
+      "supplier_id": 3,
+      "po_id": 35,
+      "invoice_date": "2026-03-21",
+      "due_date": "2026-05-05",
+      "subtotal": 27000.0,
+      "tax_amount": 4860.0,
+      "grand_total": 31860.0,
+      "file_path": "data/invoices/INV_035.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Industrial Surge Protector Strip",
+          "quantity": 15,
+          "unit_price": 1800.0,
+          "total_price": 27000.0
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "invoice_number": "INV-2026-0036",
+      "supplier_id": 4,
+      "po_id": null,
+      "invoice_date": "2026-03-23",
+      "due_date": "2026-04-22",
+      "subtotal": 60000.0,
+      "tax_amount": 10800.0,
+      "grand_total": 70800.0,
+      "file_path": "data/invoices/INV_036.pdf",
+      "status": "needs_review",
+      "mistake_type": "missing_po",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 5,
+          "unit_price": 12000.0,
+          "total_price": 60000.0
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "invoice_number": "INV-2026-0037",
+      "supplier_id": 5,
+      "po_id": null,
+      "invoice_date": "2026-03-25",
+      "due_date": "2026-04-24",
+      "subtotal": 92000.0,
+      "tax_amount": 16560.0,
+      "grand_total": 108560.0,
+      "file_path": "data/invoices/INV_037.pdf",
+      "status": "needs_review",
+      "mistake_type": "missing_po",
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 15,
+          "unit_price": 4200.0,
+          "total_price": 63000.0
+        },
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 16,
+          "unit_price": 1100.0,
+          "total_price": 17600.0
+        },
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 3,
+          "unit_price": 3800.0,
+          "total_price": 11400.0
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "invoice_number": "INV-2026-0038",
+      "supplier_id": 6,
+      "po_id": 38,
+      "invoice_date": "2026-03-27",
+      "due_date": "2026-05-11",
+      "subtotal": 204300.0,
+      "tax_amount": 36774.0,
+      "grand_total": 241074.0,
+      "file_path": "data/invoices/INV_038.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 12,
+          "unit_price": 12000.0,
+          "total_price": 144000.0
+        },
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 5,
+          "unit_price": 4500.0,
+          "total_price": 22500.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 9,
+          "unit_price": 4200.0,
+          "total_price": 37800.0
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "invoice_number": "INV-2026-0039",
+      "supplier_id": 7,
+      "po_id": 39,
+      "invoice_date": "2026-03-29",
+      "due_date": "2026-04-28",
+      "subtotal": 161500.0,
+      "tax_amount": 29070.0,
+      "grand_total": 190570.0,
+      "file_path": "data/invoices/INV_039.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 19,
+          "unit_price": 8500.0,
+          "total_price": 161500.0
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "invoice_number": "INV-2026-0040",
+      "supplier_id": 8,
+      "po_id": 40,
+      "invoice_date": "2026-03-31",
+      "due_date": "2026-05-30",
+      "subtotal": 56000.0,
+      "tax_amount": 10080.0,
+      "grand_total": 66080.0,
+      "file_path": "data/invoices/INV_040.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "price_mismatch",
+      "items": [
+        {
+          "item_name": "Wireless Keyboard & Mouse Combo",
+          "quantity": 7,
+          "unit_price": 2000.0,
+          "total_price": 14000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 10,
+          "unit_price": 4200.0,
+          "total_price": 42000.0
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "invoice_number": "INV-2026-0041",
+      "supplier_id": 1,
+      "po_id": 41,
+      "invoice_date": "2026-04-02",
+      "due_date": "2026-05-02",
+      "subtotal": 364000.0,
+      "tax_amount": 65520.0,
+      "grand_total": 429520.0,
+      "file_path": "data/invoices/INV_041.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 16,
+          "unit_price": 8500.0,
+          "total_price": 136000.0
+        },
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 19,
+          "unit_price": 12000.0,
+          "total_price": 228000.0
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "invoice_number": "INV-2026-0042",
+      "supplier_id": 2,
+      "po_id": 42,
+      "invoice_date": "2026-04-04",
+      "due_date": "2026-05-04",
+      "subtotal": 85500.0,
+      "tax_amount": 15390.0,
+      "grand_total": 100890.0,
+      "file_path": "data/invoices/INV_042.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 19,
+          "unit_price": 4500.0,
+          "total_price": 85500.0
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "invoice_number": "INV-2026-0043",
+      "supplier_id": 3,
+      "po_id": 43,
+      "invoice_date": "2026-04-06",
+      "due_date": "2026-05-21",
+      "subtotal": 108000.0,
+      "tax_amount": 19440.0,
+      "grand_total": 127440.0,
+      "file_path": "data/invoices/INV_043.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Standing Desk 120cm",
+          "quantity": 9,
+          "unit_price": 12000.0,
+          "total_price": 108000.0
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "invoice_number": "INV-2026-0044",
+      "supplier_id": 4,
+      "po_id": 44,
+      "invoice_date": "2026-04-08",
+      "due_date": "2026-05-08",
+      "subtotal": 71400.0,
+      "tax_amount": 12852.0,
+      "grand_total": 84252.0,
+      "file_path": "data/invoices/INV_044.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 17,
+          "unit_price": 4200.0,
+          "total_price": 71400.0
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "invoice_number": "INV-2026-0045",
+      "supplier_id": 5,
+      "po_id": 45,
+      "invoice_date": "2026-04-10",
+      "due_date": "2026-05-10",
+      "subtotal": 54900.0,
+      "tax_amount": 9882.0,
+      "grand_total": 64782.0,
+      "file_path": "data/invoices/INV_045.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "24-inch IPS Monitor",
+          "quantity": 3,
+          "unit_price": 8500.0,
+          "total_price": 25500.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 7,
+          "unit_price": 4200.0,
+          "total_price": 29400.0
+        }
+      ]
+    },
+    {
+      "id": 46,
+      "invoice_number": "INV-2026-0046",
+      "supplier_id": 6,
+      "po_id": 46,
+      "invoice_date": "2026-04-12",
+      "due_date": "2026-05-27",
+      "subtotal": 112200.0,
+      "tax_amount": 20196.0,
+      "grand_total": 132396.0,
+      "file_path": "data/invoices/INV_046.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Ergonomic Office Chair",
+          "quantity": 10,
+          "unit_price": 4500.0,
+          "total_price": 45000.0
+        },
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 16,
+          "unit_price": 4200.0,
+          "total_price": 67200.0
+        }
+      ]
+    },
+    {
+      "id": 47,
+      "invoice_number": "INV-2026-0047",
+      "supplier_id": 7,
+      "po_id": 47,
+      "invoice_date": "2026-04-14",
+      "due_date": "2026-05-14",
+      "subtotal": 87000.0,
+      "tax_amount": 15660.0,
+      "grand_total": 102660.0,
+      "file_path": "data/invoices/INV_047.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Cat6 Network Cable (305m Roll)",
+          "quantity": 17,
+          "unit_price": 4200.0,
+          "total_price": 71400.0
+        },
+        {
+          "item_name": "HD 1080p Video Conferencing Webcam",
+          "quantity": 6,
+          "unit_price": 2600.0,
+          "total_price": 15600.0
+        }
+      ]
+    },
+    {
+      "id": 48,
+      "invoice_number": "INV-2026-0048",
+      "supplier_id": 8,
+      "po_id": 48,
+      "invoice_date": "2026-04-16",
+      "due_date": "2026-06-15",
+      "subtotal": 25600.0,
+      "tax_amount": 4608.0,
+      "grand_total": 30208.0,
+      "file_path": "data/invoices/INV_048.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "High-Speed USB-C Dock",
+          "quantity": 8,
+          "unit_price": 3200.0,
+          "total_price": 25600.0
+        }
+      ]
+    },
+    {
+      "id": 49,
+      "invoice_number": "INV-2026-0049",
+      "supplier_id": 1,
+      "po_id": 49,
+      "invoice_date": "2026-04-18",
+      "due_date": "2026-05-18",
+      "subtotal": 72200.0,
+      "tax_amount": 12996.0,
+      "grand_total": 85196.0,
+      "file_path": "data/invoices/INV_049.pdf",
+      "status": "verified",
+      "mistake_type": "none",
+      "items": [
+        {
+          "item_name": "Active Noise-Cancelling Headset",
+          "quantity": 19,
+          "unit_price": 3800.0,
+          "total_price": 72200.0
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "invoice_number": "INV-2026-0050",
+      "supplier_id": 2,
+      "po_id": 50,
+      "invoice_date": "2026-04-20",
+      "due_date": "2026-05-20",
+      "subtotal": 8800.0,
+      "tax_amount": 1584.0,
+      "grand_total": 10384.0,
+      "file_path": "data/invoices/INV_050.pdf",
+      "status": "mismatch_detected",
+      "mistake_type": "quantity_mismatch",
+      "items": [
+        {
+          "item_name": "A4 Copier Paper (Box of 5 Reams)",
+          "quantity": 8,
+          "unit_price": 1100.0,
+          "total_price": 8800.0
+        }
+      ]
+    }
+  ]
+}

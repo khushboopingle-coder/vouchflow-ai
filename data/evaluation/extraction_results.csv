@@ -1,0 +1,49 @@
+invoice_id,file_name,gt_vendor,extracted_vendor,vendor_match,gt_invoice_number,extracted_invoice_number,invoice_number_match,gt_invoice_date,extracted_invoice_date,date_match,gt_grand_total,extracted_grand_total,total_match,gt_item_count,extracted_item_count,item_count_match,all_fields_match,confidence,is_success,model_name,error_message
+1,INV_001.pdf,Sharma Traders Pvt Ltd,Sharma Traders Pvt Ltd,True,INV-2026-0001,INV-2026-0001,True,2026-01-12,2026-01-12,True,381848.0,381848.0,True,3,3,True,True,1.0,True,mock,nan
+2,INV_002.pdf,Patel Enterprises,Patel Enterprises,True,INV-2026-0002,INV-2026-0002,True,2026-01-14,2026-01-14,True,267270.0,267270.0,True,3,3,True,True,1.0,True,mock,nan
+3,INV_003.pdf,Reddy Logistics & Supplies,Reddy Logistics & Supplies,True,INV-2026-0003,INV-2026-0003,True,2026-01-16,2026-01-16,True,198240.0,198240.0,True,1,1,True,True,1.0,True,mock,nan
+4,INV_004.pdf,Gupta Stationery & Tech,Gupta Stationery & Tech,True,INV-2026-0004,INV-2026-0004,True,2026-01-18,2026-01-18,True,31742.0,31742.0,True,2,2,True,True,1.0,True,gemini-3.6-flash,nan
+5,INV_005.pdf,Nair Office Solutions,Nair Office Solutions,True,INV-2026-0005,INV-2026-0005,True,2026-01-20,2026-01-20,True,66552.0,66552.0,True,2,2,True,True,1.0,True,gemini-3.6-flash,nan
+6,INV_006.pdf,Chatterjee Commercials,Chatterjee Commercials,True,INV-2026-0001,INV-2026-0001,True,2026-01-22,2026-01-22,True,381848.0,381848.0,True,3,3,True,True,1.0,True,gemini-3.6-flash,nan
+7,INV_007.pdf,Mehta Industrial Goods,Mehta Industrial Goods,True,INV-2026-0007,INV-2026-0007,True,2026-01-24,2026-01-24,True,3894.0,3894.0,True,1,1,True,True,1.0,True,gemini-3.6-flash,nan
+8,INV_008.pdf,Singh & Sons Equipment,Singh & Sons Equipment,True,INV-2026-0008,INV-2026-0008,True,2026-01-26,2026-01-26,True,63720.0,63720.0,True,1,1,True,True,1.0,True,gemini-3.6-flash,nan
+9,INV_009.pdf,Sharma Traders Pvt Ltd,Sharma Traders Pvt Ltd,True,INV-2026-0009,INV-2026-0009,True,2026-01-28,2026-01-28,True,313408.0,313408.0,True,2,2,True,True,1.0,True,gemini-3.6-flash,nan
+10,INV_010.pdf,Patel Enterprises,Patel Enterprises,True,INV-2026-0010,INV-2026-0010,True,2026-01-30,2026-01-30,True,191396.0,191396.0,True,3,3,True,True,1.0,True,gemini-3.5-flash-lite,nan
+11,INV_011.pdf,Reddy Logistics & Supplies,Reddy Logistics & Supplies,True,INV-2026-0011,INV-2026-0011,True,2026-02-01,2026-02-01,True,224200.0,224200.0,True,2,2,True,True,1.0,True,gemini-3.5-flash-lite,nan
+12,INV_012.pdf,Gupta Stationery & Tech,Gupta Stationery & Tech,True,INV-2026-0012,INV-2026-0012,True,2026-02-03,2026-02-03,True,159064.0,159064.0,True,2,2,True,True,1.0,True,gemini-3.5-flash-lite,nan
+13,INV_013.pdf,Nair Office Solutions,Nair Office Solutions,True,INV-2026-0013,INV-2026-0013,True,2026-02-05,2026-02-05,True,210630.0,210630.0,True,2,2,True,True,1.0,True,gemini-3.5-flash-lite,nan
+14,INV_014.pdf,Chatterjee Commercials,Chatterjee Commercials,True,INV-2026-0014,INV-2026-0014,True,2026-02-07,2026-02-07,True,26550.0,26550.0,True,1,1,True,True,1.0,True,gemini-3.5-flash-lite,nan
+15,INV_015.pdf,Mehta Industrial Goods,Mehta Industrial Goods,True,INV-2026-0015,INV-2026-0015,True,2026-02-09,2026-02-09,True,35400.0,35400.0,True,1,1,True,True,1.0,True,gemini-3.5-flash-lite,nan
+16,INV_016.pdf,Singh & Sons Equipment,Singh & Sons Equipment,True,INV-2026-0016,INV-2026-0016,True,2026-02-11,2026-02-11,True,417248.0,417248.0,True,3,3,True,True,1.0,True,gemini-3.5-flash-lite,nan
+17,INV_017.pdf,Sharma Traders Pvt Ltd,Sharma Traders Pvt Ltd,True,INV-2026-0017,INV-2026-0017,True,2026-02-13,2026-02-13,True,176056.0,176056.0,True,3,3,True,True,1.0,True,gemini-3.5-flash-lite,nan
+18,INV_018.pdf,Patel Enterprises,Patel Enterprises,True,INV-2026-0018,INV-2026-0018,True,2026-02-15,2026-02-15,True,24780.0,24780.0,True,2,2,True,True,1.0,True,gemini-3.5-flash-lite,nan
+19,INV_019.pdf,Reddy Logistics & Supplies,Reddy Logistics & Supplies,True,INV-2026-0019,INV-2026-0019,True,2026-02-17,2026-02-17,True,194464.0,194464.0,True,3,3,True,True,1.0,True,gemini-3.5-flash-lite,nan
+20,INV_020.pdf,Gupta Stationery & Tech,Gupta Stationery & Tech,True,INV-2026-0020,INV-2026-0020,True,2026-02-19,2026-02-19,True,9086.0,9086.0,True,1,1,True,True,1.0,True,gemini-3.5-flash-lite,nan
+21,INV_021.pdf,Nair Office Solutions,Nair Office Solutions,True,INV-2026-0021,INV-2026-0021,True,2026-02-21,2026-02-21,True,70766.0,70766.0,True,3,3,True,True,1.0,True,gemini-3.5-flash-lite,nan
+22,INV_022.pdf,Chatterjee Commercials,Chatterjee Commercials,True,INV-2026-0022,INV-2026-0022,True,2026-02-23,2026-02-23,True,101598.0,101598.0,True,2,2,True,True,1.0,True,gemini-3.5-flash-lite,nan
+23,INV_023.pdf,Mehta Industrial Goods,Mehta Industrial Goods,True,INV-2026-0023,INV-2026-0023,True,2026-02-25,2026-02-25,True,154580.0,154580.0,True,3,3,True,True,1.0,True,gemini-3.5-flash-lite,nan
+24,INV_024.pdf,Singh & Sons Equipment,Singh & Sons Equipment,True,INV-2026-0024,INV-2026-0024,True,2026-02-27,2026-02-27,True,40356.0,40356.0,True,1,1,True,True,1.0,True,gemini-3.5-flash-lite,nan
+25,INV_025.pdf,Sharma Traders Pvt Ltd,Sharma Traders Pvt Ltd,True,INV-2026-0025,INV-2026-0025,True,2026-03-01,2026-03-01,True,69468.0,69468.0,True,1,1,True,True,1.0,True,gemini-3.5-flash-lite,nan
+26,INV_026.pdf,Patel Enterprises,Patel Enterprises,True,INV-2026-0026,INV-2026-0026,True,2026-03-03,2026-03-03,True,234820.0,234820.0,True,3,3,True,True,1.0,True,gemini-3.1-flash-lite,nan
+27,INV_027.pdf,Reddy Logistics & Supplies,Reddy Logistics & Supplies,True,INV-2026-0027,INV-2026-0027,True,2026-03-05,2026-03-05,True,34456.0,34456.0,True,2,2,True,True,1.0,True,gemini-3.1-flash-lite,nan
+28,INV_028.pdf,Gupta Stationery & Tech,Gupta Stationery & Tech,True,INV-2026-0028,INV-2026-0028,True,2026-03-07,2026-03-07,True,169920.0,169920.0,True,1,1,True,True,1.0,True,gemini-3.1-flash-lite,nan
+29,INV_029.pdf,Nair Office Solutions,Nair Office Solutions,True,INV-2026-0029,INV-2026-0029,True,2026-03-09,2026-03-09,True,85196.0,85196.0,True,1,1,True,True,1.0,True,gemini-3.1-flash-lite,nan
+30,INV_030.pdf,Chatterjee Commercials,Chatterjee Commercials,True,INV-2026-0030,INV-2026-0030,True,2026-03-11,2026-03-11,True,41856.0,41856.0,True,1,1,True,True,1.0,True,gemini-3.1-flash-lite,nan
+31,INV_031.pdf,Mehta Industrial Goods,Mehta Industrial Goods,True,INV-2026-0001,INV-2026-0001,True,2026-03-13,2026-03-13,True,381848.0,381848.0,True,3,3,True,True,1.0,True,gemini-3.1-flash-lite,nan
+32,INV_032.pdf,Singh & Sons Equipment,Singh & Sons Equipment,True,INV-2026-0032,INV-2026-0032,True,2026-03-15,2026-03-15,True,44250.0,44250.0,True,1,1,True,True,1.0,True,gemini-3.1-flash-lite,nan
+33,INV_033.pdf,Sharma Traders Pvt Ltd,Sharma Traders Pvt Ltd,True,INV-2026-0033,INV-2026-0033,True,2026-03-17,2026-03-17,True,158120.0,158120.0,True,2,2,True,True,1.0,True,gemini-3.1-flash-lite,nan
+34,INV_034.pdf,Patel Enterprises,Patel Enterprises,True,INV-2026-0001,INV-2026-0001,True,2026-03-19,2026-03-19,True,381848.0,381848.0,True,3,3,True,True,1.0,True,gemini-3.1-flash-lite,nan
+35,INV_035.pdf,Reddy Logistics & Supplies,Reddy Logistics & Supplies,True,INV-2026-0035,INV-2026-0035,True,2026-03-21,2026-03-21,True,31860.0,31860.0,True,1,1,True,True,1.0,True,gemini-3.1-flash-lite,nan
+36,INV_036.pdf,Gupta Stationery & Tech,Gupta Stationery & Tech,True,INV-2026-0036,INV-2026-0036,True,2026-03-23,2026-03-23,True,70800.0,70800.0,True,1,1,True,True,1.0,True,gemini-3.1-flash-lite,nan
+37,INV_037.pdf,Nair Office Solutions,Nair Office Solutions,True,INV-2026-0037,INV-2026-0037,True,2026-03-25,2026-03-25,True,108560.0,108560.0,True,3,3,True,True,1.0,True,gemini-3.1-flash-lite,nan
+38,INV_038.pdf,Chatterjee Commercials,Chatterjee Commercials,True,INV-2026-0038,INV-2026-0038,True,2026-03-27,2026-03-27,True,241074.0,241074.0,True,3,3,True,True,1.0,True,gemini-3.1-flash-lite,nan
+39,INV_039.pdf,Mehta Industrial Goods,Mehta Industrial Goods,True,INV-2026-0039,INV-2026-0039,True,2026-03-29,2026-03-29,True,190570.0,190570.0,True,1,1,True,True,1.0,True,gemini-3.1-flash-lite,nan
+40,INV_040.pdf,Singh & Sons Equipment,Singh & Sons Equipment,True,INV-2026-0040,INV-2026-0040,True,2026-03-31,2026-03-31,True,66080.0,66080.0,True,2,2,True,True,1.0,True,gemini-3.1-flash-lite,nan
+41,INV_041.pdf,Sharma Traders Pvt Ltd,Sharma Traders Pvt Ltd,True,INV-2026-0041,INV-2026-0041,True,2026-04-02,2026-04-02,True,429520.0,429520.0,True,2,2,True,True,1.0,True,gemini-3.1-flash-lite,nan
+42,INV_042.pdf,Patel Enterprises,Patel Enterprises,True,INV-2026-0042,INV-2026-0042,True,2026-04-04,2026-04-04,True,100890.0,100890.0,True,1,1,True,True,1.0,True,gemini-3-flash-preview,nan
+43,INV_043.pdf,Reddy Logistics & Supplies,Reddy Logistics & Supplies,True,INV-2026-0043,INV-2026-0043,True,2026-04-06,2026-04-06,True,127440.0,127440.0,True,1,1,True,True,1.0,True,gemini-3-flash-preview,nan
+44,INV_044.pdf,Gupta Stationery & Tech,Gupta Stationery & Tech,True,INV-2026-0044,INV-2026-0044,True,2026-04-08,2026-04-08,True,84252.0,84252.0,True,1,1,True,True,1.0,True,gemini-3-flash-preview,nan
+45,INV_045.pdf,Nair Office Solutions,Nair Office Solutions,True,INV-2026-0045,INV-2026-0045,True,2026-04-10,2026-04-10,True,64782.0,64782.0,True,2,2,True,True,1.0,True,gemini-3-flash-preview,nan
+46,INV_046.pdf,Chatterjee Commercials,Chatterjee Commercials,True,INV-2026-0046,INV-2026-0046,True,2026-04-12,2026-04-12,True,132396.0,132396.0,True,2,2,True,True,1.0,True,gemini-3-flash-preview,nan
+47,INV_047.pdf,Mehta Industrial Goods,Mehta Industrial Goods,True,INV-2026-0047,INV-2026-0047,True,2026-04-14,2026-04-14,True,102660.0,102660.0,True,2,2,True,True,1.0,True,gemini-3-flash-preview,nan
+48,INV_048.pdf,Singh & Sons Equipment,,False,INV-2026-0048,,False,2026-04-16,,False,30208.0,0.0,False,1,0,False,False,0.0,False,unknown,All models reached their daily limit. Run again tomorrow with --resume

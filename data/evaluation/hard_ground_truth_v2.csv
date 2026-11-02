@@ -1,0 +1,31 @@
+invoice_id,invoice_file,supplier_name,invoice_number,invoice_date,grand_total,expected_status,expected_mistake,description
+91,INV_091.pdf,Sharma Traders Pvt Ltd,INV-V2-0091,2026-04-03,42484.72,mismatch_detected,price_mismatch,Invoiced unit price is Rs. 0.50 higher than PO and contract rate
+92,INV_092.pdf,Patel Enterprises,INV-V2-0092,2026-04-05,71862.0,mismatch_detected,price_mismatch,Invoiced unit price has a 1.5% markup over PO and contract
+93,INV_093.pdf,Gupta Supplies & Logistics,INV-V2-0093,2026-04-07,31860.0,mismatch_detected,price_mismatch,Invoice price matches PO (Rs. 1800) but violates contract agreed price (Rs. 1500)
+94,INV_094.pdf,Verma Office Solutions,INV-V2-0094,2026-04-09,60180.0,mismatch_detected,price_mismatch,Invoice price matches Contract (Rs. 8500) but ignores negotiated PO discount (Rs. 8000)
+95,INV_095.pdf,Reddy Tech Supplies,INV-V2-0095,2026-04-11,38232.0,verified,none,"Pristine multi-item invoice perfectly matching PO, GRN, and Contract"
+96,INV_096.pdf,Nair & Company,INV-V2-0096,2026-04-13,51920.0,mismatch_detected,quantity_mismatch,Partial delivery: invoice bills for 40 units but warehouse GRN confirmed 28
+97,INV_097.pdf,Mehta Commercials,INV-V2-0097,2026-04-15,89208.0,mismatch_detected,quantity_mismatch,Over-delivery: invoice bills 18 units exceeding PO authorized limit of 12
+98,INV_098.pdf,Singh & Sons Equipment,INV-V2-0098,2026-04-17,63720.0,mismatch_detected,quantity_mismatch,Quantity overbilling: invoice bills 30 units while PO and GRN both authorized 25
+99,INV_099.pdf,Sharma Traders Pvt Ltd,INV-V2-0099,2026-04-19,56345.0,mismatch_detected,price_mismatch,6-item invoice where single item #4 has an inflated unit price
+100,INV_100.pdf,Patel Enterprises,INV-V2-0100,2026-04-21,89444.0,mismatch_detected,quantity_mismatch,5-item invoice where middle item #3 has a quantity shortage on GRN
+101,INV_101.pdf,Gupta Supplies & Logistics,INV-V2-0101,2026-04-23,21004.35,verified,none,Commercial rounding difference of +Rs. 0.35 accepted within tolerance
+102,INV_102.pdf,Verma Office Solutions,INV-V2-0102,2026-04-25,19823.35,verified,none,Commercial round-off adjustment of -Rs. 0.65 accepted within tolerance
+103,INV_103.pdf,Reddy Tech Supplies,INV-V2-0103,2026-04-27,42481.85,mismatch_detected,wrong_total,Mathematical calculation discrepancy of Rs. 1.85 exceeding rounding tolerance
+104,INV_104.pdf,Nair & Company,INV-V2-0104,2026-04-29,38080.0,mismatch_detected,wrong_total,GST calculated at incorrect rate of 12% instead of standard 18%
+105,INV_105.pdf,Mehta Commercials,INV-V2-0105,2026-05-01,21840.0,mismatch_detected,wrong_total,GST calculated at incorrect rate of 5% instead of standard 18%
+106,INV_106.pdf,Singh & Sons Equipment,INV-V2-0106,2026-05-03,70800.0,verified,none,Clean invoice with round figures matching PO and GRN
+107,INV_107.pdf,Reddy Tech Supplies,INV-HARD-0095-REV,2026-04-11,38232.0,mismatch_detected,duplicate_invoice,"Duplicate invoice: revised invoice number with identical supplier, date, and amount"
+108,INV_108.pdf,Singh & Sons Equipment,DUP/2026/0106,2026-05-03,70800.0,mismatch_detected,duplicate_invoice,"Duplicate invoice: re-numbered submission with identical supplier, date, and grand total"
+109,INV_109.pdf,Gupta Supplies & Logistics,INV-V2-SHARED-01,2026-05-09,17700.0,verified,none,Valid invoice using shared format INV-V2-SHARED-01 from Supplier 3
+110,INV_110.pdf,Reddy Tech Supplies,INV-V2-SHARED-01,2026-05-11,12744.0,verified,none,Valid invoice using shared format INV-V2-SHARED-01 from Supplier 5 (NOT a duplicate)
+111,INV_111.pdf,Sharma Traders Pvt Ltd,INV-V2-0111,2026-04-19,31860.0,verified,none,Valid weekend/Sunday invoice fully authorized by PO schedule
+112,INV_112.pdf,Patel Enterprises,INV-V2-0112,2026-05-15,1062000.0,verified,none,Valid massive bulk order with large grand total matching PO and GRN
+113,INV_113.pdf,Gupta Supplies & Logistics,INV-V2-0113,2026-05-17,153400.0,mismatch_detected,price_mismatch,Compound error: simultaneous price mismatch and quantity mismatch (priority: price_mismatch)
+114,INV_114.pdf,Verma Office Solutions,INV-V2-0114,2026-05-19,42648.0,mismatch_detected,price_mismatch,Compound error: simultaneous price mismatch and arithmetic calculation error (priority: price_mismatch)
+115,INV_115.pdf,Reddy Tech Supplies,INV-V2-0115,2026-05-21,111180.0,mismatch_detected,quantity_mismatch,Compound error: simultaneous quantity shortage and tax calculation error (priority: quantity_mismatch)
+116,INV_116.pdf,Nair & Company,INV-V2-0116,2026-05-23,20380.0,needs_review,missing_po,Compound error: missing PO reference and arithmetic total error (priority: missing_po -> needs_review)
+117,INV_117.pdf,Mehta Commercials,INV-V2-0117,2026-05-25,14868.0,needs_review,missing_po,Invoice missing PO reference on otherwise pristine billing
+118,INV_118.pdf,Singh & Sons Equipment,INV-V2-0118,2026-05-27,30090.0,verified,none,Clean 2-item invoice matching PO and GRN perfectly
+119,INV_119.pdf,Sharma Traders Pvt Ltd,INV-V2-0119,2026-05-29,21240.99,verified,none,Commercial rounding difference of +Rs. 0.99 (just within Rs. 1.00 tolerance)
+120,INV_120.pdf,Patel Enterprises,INV-V2-0120,2026-05-31,21241.05,mismatch_detected,wrong_total,Discrepancy of Rs. 1.05 exceeding rounding tolerance by 5 paise
