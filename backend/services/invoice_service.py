@@ -25,7 +25,8 @@ from backend.database.models import (
     Supplier,
     PurchaseOrder,
     InvoiceExtraction,
-    InvoiceCheck
+    InvoiceCheck,
+    InvoiceInvestigation
 )
 from backend.database.schemas import (
     InvoiceRead,
@@ -37,6 +38,8 @@ from backend.database.schemas import (
     InvoiceCheckResult,
     InvoiceCheckDetail
 )
+from backend.agent.state import InvestigationReport
+from backend.agent.graph import run_investigation
 from backend.tools.invoice_reader import reader
 from backend.tools.matcher import perform_three_way_match
 
@@ -423,3 +426,78 @@ def get_invoice_check(
         findings=findings,
         created_at=check_record.created_at
     )
+
+
+def investigate_invoice(
+    db: Session,
+    invoice_id: int,
+    who: str = "api_user"
+) -> InvestigationReport:
+    """
+    Executes the Investigation Agent LangGraph workflow for an invoice.
+    Persists the report in invoice_investigations table.
+    NOTE: Invoice status is NOT modified; the agent never decides to approve or pay.
+    """
+    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not inv:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Invoice with ID {invoice_id} not found."
+        )
+
+    # Run LangGraph workflow
+    report = run_investigation(invoice_id=invoice_id, db=db, who=who)
+
+    # Persist report in invoice_investigations table
+    investigation_record = InvoiceInvestigation(
+        invoice_id=invoice_id,
+        status=report.status,
+        recommended_next_action=report.recommended_next_action,
+        confidence=report.confidence,
+        report_json=report.model_dump_json(),
+        created_at=datetime.utcnow()
+    )
+    db.add(investigation_record)
+    db.commit()
+    db.refresh(investigation_record)
+
+    return report
+
+
+def get_invoice_investigation(
+    db: Session,
+    invoice_id: int
+) -> InvestigationReport:
+    """
+    Retrieves the most recent Investigation Agent report for an invoice.
+    Raises 404 if no investigation has been performed yet.
+    """
+    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not inv:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Invoice with ID {invoice_id} not found."
+        )
+
+    investigation_record = (
+        db.query(InvoiceInvestigation)
+        .filter(InvoiceInvestigation.invoice_id == invoice_id)
+        .order_by(InvoiceInvestigation.created_at.desc())
+        .first()
+    )
+
+    if not investigation_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No investigation found for invoice ID {invoice_id}. Run POST /invoices/{invoice_id}/investigate first."
+        )
+
+    try:
+        data = json.loads(investigation_record.report_json)
+        return InvestigationReport(**data)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to parse stored investigation report: {str(e)}"
+        )
+

@@ -21,6 +21,31 @@ COLLECTION_NAME = "supplier_contracts"
 # Distance threshold: distances above 1.15 in L2 indicate out-of-domain / unanswerable queries
 RELEVANCE_DISTANCE_THRESHOLD = 1.15
 
+KNOWN_CONTRACT_SUPPLIERS = [
+    "Sharma Traders Pvt Ltd",
+    "Patel Enterprises",
+    "Reddy Logistics & Supplies",
+    "Mehta Industrial Solutions",
+    "Gupta Office Essentials",
+    "Verma Tech Components",
+    "Nair & Company",
+    "Singh & Sons Equipment"
+]
+
+
+def find_matching_supplier(supplier_name: Optional[str]) -> Optional[str]:
+    """Matches a vendor name to the known indexed contract suppliers in ChromaDB."""
+    if not supplier_name:
+        return None
+    s_norm = "".join(c for c in supplier_name.lower() if c.isalnum())
+    for cand in KNOWN_CONTRACT_SUPPLIERS:
+        c_norm = "".join(c for c in cand.lower() if c.isalnum())
+        first_token = supplier_name.strip().split()[0].lower()
+        cand_first_token = cand.strip().split()[0].lower()
+        if (s_norm in c_norm or c_norm in s_norm) or (first_token == cand_first_token and len(first_token) > 3):
+            return cand
+    return None
+
 
 def parse_contract_clauses(file_path: Path) -> List[Document]:
     """Parses a contract .txt file into discrete, clause-level Document chunks.
@@ -198,7 +223,8 @@ def get_vector_store(
 
 def detect_conflicts(
     docs_with_scores: List[Tuple[Document, float]],
-    question: str
+    question: str,
+    supplier_name: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
     """Analyzes top retrieved candidates to detect whether two contracts or clauses disagree.
     Never picks one silently if a conflict exists.
@@ -242,16 +268,14 @@ def detect_conflicts(
 
     # -------------------------------------------------------------
     # Case 2: Cross-Contract Disagreement Across Suppliers
-    # When a question asks for a term generally (e.g. warranty, payment terms, late delivery penalty)
-    # without qualifying a specific vendor, and multiple contracts offer differing answers.
+    # Only applies when query does NOT target a specific supplier
     # -------------------------------------------------------------
-    # Check if a specific vendor name was specified in the question
     all_suppliers = [
         "sharma traders", "patel enterprises", "reddy logistics",
         "mehta industrial", "gupta office", "verma tech",
         "nair & company", "singh & sons"
     ]
-    vendor_in_question = any(s in q_lower for s in all_suppliers)
+    vendor_in_question = bool(supplier_name) or any(s in q_lower for s in all_suppliers)
     
     # If question did not target a single vendor, check for divergent top matches
     if not vendor_in_question:
@@ -288,21 +312,95 @@ def detect_conflicts(
 def ask_contract(
     question: str,
     vector_store: Optional[Chroma] = None,
-    top_k: int = 4
+    top_k: int = 4,
+    supplier_name: Optional[str] = None
 ) -> Dict[str, Any]:
     """Retrieves the best matching contract clause for a given query.
+    If supplier_name is provided, scopes the search strictly to that supplier's contract.
     
     Returns a dictionary with:
-    - answer: The matching clause text, or 'I don't know', or explanation of conflict.
-    - source: The source string (e.g. 'contract_supplier_1.txt, Clause 4') or list of sources if conflicting, or None.
+    - answer: The matching clause text, or 'no source found' / 'I don't know', or conflict details.
+    - source: The source string (e.g. 'contract_supplier_1.txt, Clause 4') or 'no source found' or list of sources.
     - status: 'found', 'not_found', or 'conflict'.
     - sources: Always a list of matching source strings.
     - distance: L2 distance score from Chroma.
     """
     vs = vector_store or get_vector_store()
     
-    # Retrieve top candidates with L2 distance scores
-    candidates: List[Tuple[Document, float]] = vs.similarity_search_with_score(question, k=top_k)
+    # -------------------------------------------------------------------------
+    # Supplier-Scoped Search (Investigation Agent Mode)
+    # -------------------------------------------------------------------------
+    if supplier_name:
+        matched_supplier = find_matching_supplier(supplier_name)
+        if not matched_supplier:
+            return {
+                "answer": "no source found",
+                "source": "no source found",
+                "sources": [],
+                "status": "not_found",
+                "distance": 999.0,
+                "matched_clause": None
+            }
+            
+        candidates: List[Tuple[Document, float]] = vs.similarity_search_with_score(
+            question,
+            k=top_k,
+            filter={"supplier_name": matched_supplier}
+        )
+        
+        if not candidates:
+            return {
+                "answer": "no source found",
+                "source": "no source found",
+                "sources": [],
+                "status": "not_found",
+                "distance": 999.0,
+                "matched_clause": None
+            }
+            
+        best_doc, best_distance = candidates[0]
+        
+        if best_distance > RELEVANCE_DISTANCE_THRESHOLD:
+            return {
+                "answer": "no source found",
+                "source": "no source found",
+                "sources": [],
+                "status": "not_found",
+                "distance": round(best_distance, 4),
+                "matched_clause": None
+            }
+            
+        # Conflict detection strictly scoped to the same supplier
+        conflict_info = detect_conflicts(candidates, question, supplier_name=matched_supplier)
+        if conflict_info:
+            return {
+                "answer": conflict_info["details"],
+                "source": conflict_info["sources"],
+                "sources": conflict_info["sources"],
+                "status": "conflict",
+                "distance": round(best_distance, 4),
+                "conflict_details": conflict_info
+            }
+            
+        src = f"{best_doc.metadata['file_name']}, {best_doc.metadata['clause_number']}"
+        return {
+            "answer": best_doc.page_content.strip(),
+            "source": src,
+            "sources": [src],
+            "status": "found",
+            "distance": round(best_distance, 4),
+            "matched_clause": {
+                "file_name": best_doc.metadata.get("file_name"),
+                "clause_number": best_doc.metadata.get("clause_number"),
+                "clause_title": best_doc.metadata.get("clause_title"),
+                "supplier_name": best_doc.metadata.get("supplier_name")
+            }
+        }
+
+    # -------------------------------------------------------------------------
+    # General Unscoped Search (RAG Benchmark Evaluation Mode)
+    # -------------------------------------------------------------------------
+    candidates = vs.similarity_search_with_score(question, k=top_k)
     
     if not candidates:
         return {
@@ -327,8 +425,8 @@ def ask_contract(
             "matched_clause": None
         }
         
-    # 2. Conflict detection: "If two contracts disagree, show both sources or say the answer is conflicting"
-    conflict_info = detect_conflicts(candidates, question)
+    # 2. Conflict detection: Cross-contract or intra-contract disagreement
+    conflict_info = detect_conflicts(candidates, question, supplier_name=None)
     if conflict_info:
         return {
             "answer": conflict_info["details"],

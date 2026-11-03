@@ -137,6 +137,7 @@ class Invoice(Base):
     items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
     extractions = relationship("InvoiceExtraction", back_populates="invoice", cascade="all, delete-orphan")
     checks = relationship("InvoiceCheck", back_populates="invoice", cascade="all, delete-orphan")
+    investigations = relationship("InvoiceInvestigation", back_populates="invoice", cascade="all, delete-orphan")
 
 
 class InvoiceItem(Base):
@@ -223,3 +224,24 @@ class AuditLog(Base):
     action = Column(String(100), nullable=False)
     time = Column(DateTime, default=datetime.utcnow, nullable=False)
     details = Column(Text, nullable=True)
+
+
+class InvoiceInvestigation(Base):
+    """
+    Stores Investigation Agent reports for an invoice.
+    Tracks status, findings, contract citations, template explanation,
+    recommended next action, confidence, limitations, and full report JSON.
+    """
+    __tablename__ = "invoice_investigations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=False, index=True)
+    status = Column(String(50), nullable=False)  # verified, mismatch_detected, needs_review
+    recommended_next_action = Column(String(50), nullable=False)
+    confidence = Column(Float, default=0.0, nullable=False)
+    report_json = Column(Text, nullable=False)  # Full JSON payload of InvestigationReport
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    invoice = relationship("Invoice", back_populates="investigations")
+

@@ -30,3 +30,6 @@ google-genai>=1.0.0
 langchain>=0.1.0
 langchain-community>=0.0.20
 chromadb>=0.4.0
+
+# Investigation Agent & Workflow (Phase 5)
+langgraph>=0.2.0

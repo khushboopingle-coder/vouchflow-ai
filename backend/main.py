@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from backend.database.db import get_db, init_db
 from backend.database import schemas
 from backend.database.models import AuditLog
+from backend.agent.state import InvestigationReport
 from backend.services import invoice_service
 
 
@@ -201,3 +202,44 @@ def list_audit_logs(
 ):
     """Returns recent system audit log events."""
     return db.query(AuditLog).order_by(AuditLog.time.desc()).limit(limit).all()
+
+
+@app.post(
+    "/invoices/{invoice_id}/investigate",
+    response_model=InvestigationReport,
+    summary="Run Investigation Agent workflow on an invoice",
+    tags=["Investigation"]
+)
+def investigate_invoice_endpoint(
+    invoice_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Executes the Investigation Agent workflow (LangGraph) for an invoice:
+    - Loads invoice & extraction
+    - Executes 3-way matcher
+    - Retrieves PO limits and warehouse physical GRN receipts
+    - Searches master contracts for clauses behind each finding
+    - Formulates auditable evidence list comparing values and sources
+    - Writes deterministic template explanation and recommended action
+    - Logs each step to audit_logs
+    NOTE: The agent never decides to approve or pay. Invoice status is NOT modified.
+    """
+    return invoice_service.investigate_invoice(db=db, invoice_id=invoice_id, who="api_user")
+
+
+@app.get(
+    "/invoices/{invoice_id}/investigation",
+    response_model=InvestigationReport,
+    summary="Get saved Investigation Agent report for an invoice",
+    tags=["Investigation"]
+)
+def get_invoice_investigation_endpoint(
+    invoice_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieves the most recent Investigation Agent report for an invoice.
+    """
+    return invoice_service.get_invoice_investigation(db=db, invoice_id=invoice_id)
+
