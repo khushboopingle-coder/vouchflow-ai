@@ -79,6 +79,11 @@ class InvestigationReport(BaseModel):
     - recommended_next_action
     - confidence
     - limitations
+    - grounding_checked   (Phase 5B: how many LLM claims were verified)
+    - grounding_failed    (Phase 5B: how many LLM claims were not in evidence)
+    - injection_detected  (Phase 5B: True if prompt-injection text was found)
+    - blocked_actions     (Phase 5B: list of actions the agent tried but was blocked from)
+    - llm_used            (Phase 5B: True if LLM wrote the explanation, False if template was used)
     """
     invoice_id: int = Field(..., description="Database ID of the investigated invoice")
     status: str = Field(..., description="Overall verification status: verified, mismatch_detected, or needs_review")
@@ -92,7 +97,7 @@ class InvestigationReport(BaseModel):
     )
     explanation: str = Field(
         ...,
-        description="Deterministic template explanation synthesizing findings, evidence, and contract terms"
+        description="Explanation synthesizing findings, evidence, and contract terms (LLM or template fallback)"
     )
     recommended_next_action: RecommendedAction = Field(
         ...,
@@ -106,7 +111,28 @@ class InvestigationReport(BaseModel):
     )
     limitations: List[str] = Field(
         default_factory=list,
-        description="Explicit boundaries: agent does not approve/pay, deterministic template used, etc."
+        description="Explicit boundaries: agent does not approve/pay, etc."
+    )
+    # Phase 5B guardrail fields
+    grounding_checked: int = Field(
+        0,
+        description="Number of numeric/clause claims in the LLM explanation that were verified against evidence"
+    )
+    grounding_failed: int = Field(
+        0,
+        description="Number of LLM claims that could not be grounded in the evidence (replaced with [unverified])"
+    )
+    injection_detected: bool = Field(
+        False,
+        description="True if instruction-like text was detected in invoice content"
+    )
+    blocked_actions: List[str] = Field(
+        default_factory=list,
+        description="List of action names the agent attempted but was blocked from by the permissions guardrail"
+    )
+    llm_used: bool = Field(
+        False,
+        description="True if an LLM wrote the explanation; False if the template fallback was used"
     )
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -134,3 +160,9 @@ class InvestigationState(TypedDict, total=False):
     report: Optional[Dict[str, Any]]
     audit_entries: List[str]
     errors: List[str]
+    # Phase 5B guardrail state
+    grounding_checked: int
+    grounding_failed: int
+    injection_detected: bool
+    blocked_actions: List[str]
+    llm_used: bool
