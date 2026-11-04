@@ -7,9 +7,13 @@ It sets up the page, runs the one-time demo start-up, draws the shared sidebar
 (brand, "Demo data" badge, page menu) and then opens the chosen page:
 
     Home           -> dashboard/home.py   (invoice ledger)
-    Investigation  -> dashboard/pages/1_Investigation.py
-    Approvals      -> dashboard/pages/2_Approvals.py
-    Evals          -> dashboard/pages/3_Evals.py
+    Investigation  -> dashboard/views/investigation.py
+    Approvals      -> dashboard/views/approvals.py
+    Evals          -> dashboard/views/evals.py
+
+The pages live in views/, NOT pages/: Streamlit treats a folder called pages/ as its
+old automatic multipage mode, which hides this router's sidebar and banner on those
+pages and shows "Page not found" for direct links on a fresh server.
 """
 
 import importlib
@@ -45,20 +49,23 @@ def _fresh_module(name: str):
     return module
 
 
+# Addresses come from the file names: /investigation, /approvals, /evals.
+# Registered before the slow demo start-up so the page is known straight away.
+# One icon style for the whole menu: rounded Material icons (coloured by the theme).
+PAGES = [
+    st.Page("home.py", title="Home", icon=":material/home:", default=True),
+    st.Page("views/investigation.py", title="Investigation", icon=":material/manage_search:"),
+    st.Page("views/approvals.py", title="Approvals", icon=":material/task_alt:"),
+    st.Page("views/evals.py", title="Evals", icon=":material/insights:"),
+]
+current = st.navigation(PAGES, position="hidden")  # menu is drawn below the brand instead
+
 demo_setup = _fresh_module("demo_setup")
 ui = _fresh_module("ui_common")
 
 ui.apply_global_css()
 # Demo start-up: works without API / .env / Gemini key (seeds an empty database once)
 demo_setup.ensure_demo_ready()
-
-PAGES = [
-    st.Page("home.py", title="Home", icon="🏠", default=True),
-    st.Page("pages/1_Investigation.py", title="Investigation", icon="🔎", url_path="investigation"),
-    st.Page("pages/2_Approvals.py", title="Approvals", icon="✅", url_path="approvals"),
-    st.Page("pages/3_Evals.py", title="Evals", icon="📊", url_path="evals"),
-]
-current = st.navigation(PAGES, position="hidden")  # menu is drawn below the brand instead
 
 ui.render_sidebar_brand(PAGES, current)
 ui.show_demo_banner()

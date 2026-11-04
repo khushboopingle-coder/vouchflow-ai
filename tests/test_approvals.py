@@ -25,7 +25,7 @@ from backend.main import app
 from backend.services.invoice_service import investigate_invoice
 
 TESTER = "Test Approver Asha"
-DASHBOARD_PAGES = Path(__file__).resolve().parent.parent / "dashboard" / "pages"
+DASHBOARD_PAGES = Path(__file__).resolve().parent.parent / "dashboard" / "views"
 
 
 @pytest.fixture(scope="module")
@@ -186,7 +186,7 @@ def test_override_agent_needs_note(client, investigated):
 # ---------------------------------------------------------------------
 # Dashboard pages load
 # ---------------------------------------------------------------------
-@pytest.mark.parametrize("page", ["1_Investigation.py", "2_Approvals.py", "3_Evals.py"])
+@pytest.mark.parametrize("page", ["investigation.py", "approvals.py", "evals.py"])
 def test_dashboard_page_loads(page):
     from streamlit.testing.v1 import AppTest
 

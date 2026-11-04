@@ -11,6 +11,7 @@ Shared helpers for the VouchFlow AI dashboard.
 """
 
 import html
+import json
 import os
 import sys
 from pathlib import Path
@@ -194,6 +195,82 @@ def status_pill(status: Optional[str]) -> str:
     return f'<span class="vf-pill vf-{key}">{html.escape(status_label(status))}</span>'
 
 
+# Finding result -> (palette status key, label) for the Match / Mismatch pill
+RESULT_PILLS = {
+    "pass": ("verified", "Match"),
+    "fail": ("mismatch_detected", "Mismatch"),
+    "warning": ("needs_review", "Check"),
+}
+_WORD_FIXES = {"po": "PO", "grn": "GRN", "gst": "GST", "18pct": "18%", "id": "ID", "pct": "%"}
+_MONEY_WORDS = ("price", "total", "subtotal", "amount", "tax", "difference")
+_EVIDENCE_META = ("values_compared", "sources", "raw_details", "difference_amount", "details")
+
+
+def result_pill(status: Optional[str]) -> str:
+    """Green "Match" for a passed check, red "Mismatch" for a failed one."""
+    key, label = RESULT_PILLS.get(status or "", ("other", (status or "—").title()))
+    return f'<span class="vf-pill vf-{key}">{html.escape(label)}</span>'
+
+
+def humanize(key: str) -> str:
+    """'po_unit_price' -> 'PO unit price'."""
+    words = [_WORD_FIXES.get(w, w) for w in str(key).split("_") if w]
+    text = " ".join(words)
+    return text[:1].upper() + text[1:]
+
+
+def format_evidence_value(key: str, value: Any) -> str:
+    if value is None:
+        return "—"
+    if isinstance(value, bool):
+        return "Yes" if value else "No"
+    if isinstance(value, (int, float)) and any(w in str(key).lower() for w in _MONEY_WORDS):
+        return money(value)
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    return str(value)
+
+
+def evidence_rows(evidence: Any) -> List[Dict[str, str]]:
+    """Turns a finding's evidence into rows: What we compared | Value | Source.
+    Uses values_compared + sources when present, otherwise the plain keys."""
+    if not isinstance(evidence, dict):
+        return []
+    compared = evidence.get("values_compared")
+    sources = evidence.get("sources") if isinstance(evidence.get("sources"), dict) else {}
+    if not isinstance(compared, dict) or not compared:
+        compared = {k: v for k, v in evidence.items() if k not in _EVIDENCE_META}
+    return [
+        {
+            "What we compared": humanize(k),
+            "Value": format_evidence_value(k, v),
+            "Source": sources.get(k) or "—",
+        }
+        for k, v in compared.items()
+    ]
+
+
+def render_evidence(finding: Dict[str, Any]) -> None:
+    """Clean evidence view for one finding: result pill, difference, item, table."""
+    evidence = finding.get("evidence") or {}
+    raw = evidence.get("raw_details") if isinstance(evidence, dict) else None
+    item = raw.get("item_name") if isinstance(raw, dict) else None
+    diff = finding.get("difference_amount") or 0
+    parts = [result_pill(finding.get("status"))]
+    parts.append(f'<span class="evidence-meta">Difference: <b>{html.escape(money(diff))}</b></span>')
+    if item:
+        parts.append(f'<span class="evidence-meta">Item: <b>{html.escape(str(item))}</b></span>')
+    st.markdown(f'<div class="evidence-head">{"".join(parts)}</div>', unsafe_allow_html=True)
+    if finding.get("message"):
+        st.markdown(f'<div class="evidence-msg">{html.escape(str(finding["message"]))}</div>',
+                    unsafe_allow_html=True)
+    rows = evidence_rows(evidence)
+    if rows:
+        render_html_table(rows, compact=True)
+    else:
+        st.caption("No values were recorded for this check.")
+
+
 def action_box(action: Optional[str], text: str) -> None:
     """Shows a coloured box that matches the agent's recommendation."""
     if action == "ready_for_human_approval":
@@ -275,6 +352,13 @@ a, a:visited { color: $accent; }
 [data-testid="stPageLink"] a { border-radius: 10px; padding: .35rem .6rem; background: transparent !important; }
 [data-testid="stPageLink"] a:hover { background: $accent_soft; }
 [data-testid="stPageLink"] a:hover span { color: $accent !important; }
+/* same icon style for every menu item: rounded Material icons in brown */
+[data-testid="stPageLink"] [data-testid="stIconMaterial"] { color: $primary !important; }
+/* white text + icon on the brown active item (beats the general sidebar text colour) */
+[data-testid="stSidebar"] .nav-active, [data-testid="stSidebar"] .nav-active span { color: $on_primary !important; }
+.nav-icon { font-family: 'Material Symbols Rounded'; font-size: 1rem; line-height: 1;
+    font-weight: normal; font-style: normal; color: $on_primary;
+    -webkit-font-feature-settings: 'liga'; font-feature-settings: 'liga'; }
 
 /* ---------- chrome accents ---------- */
 hr { border: 0 !important; height: 1px; margin: 1.5rem 0 !important;
@@ -382,6 +466,16 @@ table.vf-table tbody tr:nth-child(even) td { background: $card_alt; }
 table.vf-table tbody tr:hover td { background: $accent_soft; }
 table.vf-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
+.vf-table-wrap.compact { max-height: none; box-shadow: none; margin-bottom: .4rem; }
+.vf-table-wrap.compact table.vf-table tbody td { white-space: normal; }
+
+/* ---------- evidence (Investigation page) ---------- */
+.evidence-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: .1rem 0 .5rem; }
+.evidence-meta { color: $muted; font-size: .82rem; padding: 3px 10px; border-radius: 999px;
+    border: 1px solid $chrome_dark; background: linear-gradient(180deg, $chrome_light, $card); }
+.evidence-meta b { color: $text; }
+.evidence-msg { color: $text; font-size: .88rem; margin: 0 0 .6rem; }
+
 /* ---------- status pills ---------- */
 .vf-pill { display: inline-block; padding: 3px 10px; border-radius: 999px;
     font-size: .76rem; font-weight: 700; border: 1px solid transparent; }
@@ -435,6 +529,14 @@ def show_demo_banner() -> None:
                 unsafe_allow_html=True)
 
 
+def material_name(icon: Optional[str]) -> str:
+    """':material/home:' -> 'home' (for drawing the icon in our own HTML)."""
+    icon = icon or ""
+    if icon.startswith(":material/") and icon.endswith(":"):
+        return html.escape(icon[len(":material/"):-1])
+    return html.escape(icon)
+
+
 def render_sidebar_brand(pages: list, current=None) -> None:
     """Sidebar top: brand, small data badge, then the page menu.
     The open page (`current`, from st.navigation) is drawn as a brown pill."""
@@ -460,7 +562,8 @@ def render_sidebar_brand(pages: list, current=None) -> None:
         for page in pages:
             if current is not None and page.url_path == current.url_path:
                 st.markdown(
-                    f'<div class="nav-active"><span>{page.icon}</span>{html.escape(page.title)}</div>',
+                    f'<div class="nav-active"><span class="nav-icon">{material_name(page.icon)}</span>'
+                    f'{html.escape(page.title)}</div>',
                     unsafe_allow_html=True,
                 )
             else:
@@ -469,7 +572,7 @@ def render_sidebar_brand(pages: list, current=None) -> None:
 
 
 def render_html_table(rows: List[Dict[str, Any]], status_column: Optional[str] = None,
-                      numeric_columns: Tuple[str, ...] = ()) -> None:
+                      numeric_columns: Tuple[str, ...] = (), compact: bool = False) -> None:
     """Styled HTML table (cream rows, brown header, chrome borders, status pills).
     `rows` are dicts with display values; the status column holds raw status keys."""
     if not rows:
@@ -488,7 +591,7 @@ def render_html_table(rows: List[Dict[str, Any]], status_column: Optional[str] =
                 cells.append(f"<td{cls}>{html.escape('—' if value is None else str(value))}</td>")
         body.append("<tr>" + "".join(cells) + "</tr>")
     st.markdown(
-        f'<div class="vf-table-wrap"><table class="vf-table"><thead><tr>{head}</tr></thead>'
+        f'<div class="vf-table-wrap{" compact" if compact else ""}"><table class="vf-table"><thead><tr>{head}</tr></thead>'
         f'<tbody>{"".join(body)}</tbody></table></div>',
         unsafe_allow_html=True,
     )

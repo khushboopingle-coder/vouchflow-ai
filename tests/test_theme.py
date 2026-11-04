@@ -21,7 +21,7 @@ sys.path.insert(0, str(DASHBOARD))
 import ui_common  # noqa: E402
 
 HEX = re.compile(r"#[0-9a-fA-F]{6}\b")
-PAGE_FILES = [DASHBOARD / "app.py", DASHBOARD / "home.py", *sorted((DASHBOARD / "pages").glob("*.py"))]
+PAGE_FILES = [DASHBOARD / "app.py", DASHBOARD / "home.py", *sorted((DASHBOARD / "views").glob("*.py"))]
 
 
 def test_config_toml_matches_palette():

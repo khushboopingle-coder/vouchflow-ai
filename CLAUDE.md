@@ -40,7 +40,8 @@ against purchase orders (PO), goods received notes (GRN) and supplier contracts
 - `dashboard/home.py` — Home page: KPI cards, invoice ledger, invoice inspection
 - `.streamlit/config.toml` — light theme + DM Sans font; colours must equal `ui_common.PALETTE`
   (checked by `tests/test_theme.py`)
-- `dashboard/pages/` — `1_Investigation.py`, `2_Approvals.py`, `3_Evals.py` (Evals is read-only)
+- `dashboard/views/` — `investigation.py`, `approvals.py`, `evals.py` (Evals is read-only).
+  NOT named `pages/`: Streamlit's auto-multipage folder would hide the router's sidebar/banner
 - `dashboard/ui_common.py` — shared helpers: API first, falls back to services on local DB; `PALETTE` (the ONLY place with colours — no hex codes in other dashboard files),
   `apply_global_css()` (called once at the top of app.py, home.py and each page),
   sidebar brand/menu, demo banner, status pills, `render_html_table` (invoice ledger).
