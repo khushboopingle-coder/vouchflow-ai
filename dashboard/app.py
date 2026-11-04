@@ -26,6 +26,13 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Demo start-up: works without API / .env / Gemini key (seeds an empty database once)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import demo_setup  # noqa: E402
+
+demo_setup.ensure_demo_ready()
+demo_setup.show_demo_note()
+
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 
 # ---------------------------------------------------------------------
@@ -328,12 +335,15 @@ with st.sidebar:
         (
             '<div class="sidebar-status">● Backend connected</div>'
             if api_status
-            else '<div class="sidebar-status offline">● Backend offline</div>'
+            else '<div class="sidebar-status offline">● Standalone mode</div>'
         ),
         unsafe_allow_html=True,
     )
     if not api_status:
-        st.caption("Start the API with `uvicorn backend.main:app --reload`.")
+        st.caption(
+            "Running without the API, straight on the local database. "
+            "To use the API locally: `uvicorn backend.main:app --reload`."
+        )
 
     st.markdown('<div class="sidebar-label">Filter ledger</div>', unsafe_allow_html=True)
     status_options = [

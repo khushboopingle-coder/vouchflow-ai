@@ -1,35 +1,40 @@
 # VouchFlow AI - Python Dependencies
-# Core Web Framework and API
-fastapi>=0.110.0
-uvicorn[standard]>=0.28.0
-python-multipart>=0.0.9
+# Versions are pinned to the ones the full test suite passed with,
+# so Streamlit Community Cloud installs exactly the same packages.
+
+# Core Web Framework and API (the dashboard also uses fastapi's HTTPException)
+fastapi==0.135.1
+uvicorn[standard]==0.42.0
+python-multipart==0.0.32
 
 # Database and Data Validation (SQLAlchemy 2.x and Pydantic v2)
-sqlalchemy>=2.0.0
-pydantic>=2.0.0
-pydantic-settings>=2.0.0
-python-dotenv>=1.0.0
+sqlalchemy==2.1.6
+pydantic==2.14.2
+pydantic-settings==2.16.2
+python-dotenv==1.2.2
 
 # Synthetic Data Generation and PDF Creation
-faker>=24.0.0
-reportlab>=4.1.0
-pandas>=2.0.0
+faker==40.44.0
+reportlab==5.1.0
+pandas==2.3.3
 
 # User Interface Dashboard
-streamlit>=1.32.0
+streamlit==1.58.0
+requests==2.32.5
 
 # Testing and HTTP Client
-pytest>=8.0.0
-httpx>=0.27.0
+pytest==9.1.1
+httpx==0.28.1
 
 # PDF Text Extraction & Gemini AI (Phase 1 Invoice Reader)
-pdfplumber>=0.11.0
-google-genai>=1.0.0
+pdfplumber==0.11.10
+google-genai==1.67.0
 
 # Contract Finder RAG (Phase 4)
-langchain>=0.1.0
-langchain-community>=0.0.20
-chromadb>=0.4.0
+langchain==1.4.7
+langchain-community==0.4.2
+langchain-core==1.7.3
+chromadb==1.5.9
 
 # Investigation Agent & Workflow (Phase 5)
-langgraph>=0.2.0
+langgraph==1.2.19

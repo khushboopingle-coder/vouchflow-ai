@@ -70,8 +70,9 @@ if not ok:
 # Summary
 # ---------------------------------------------------------------------
 st.markdown("---")
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Check status", ui.status_label(report.get("status")))
+m1, m2, m3, m4 = st.columns([2, 1, 1, 1])  # first box wider so "Mismatch detected" fits
+SHORT_STATUS = {"verified": "Verified", "mismatch_detected": "Mismatch", "needs_review": "Needs review"}
+m1.metric("Check status", SHORT_STATUS.get(report.get("status"), ui.status_label(report.get("status"))))
 m2.metric("Confidence", f'{float(report.get("confidence", 0)) * 100:.0f}%')
 m3.metric("Findings", len(report.get("findings", [])))
 m4.metric("Contract quotes", len(report.get("contract_citations", [])))

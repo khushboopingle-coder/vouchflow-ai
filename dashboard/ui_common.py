@@ -18,6 +18,11 @@ import streamlit as st
 BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
+DASHBOARD_DIR = Path(__file__).resolve().parent
+if str(DASHBOARD_DIR) not in sys.path:
+    sys.path.insert(0, str(DASHBOARD_DIR))
+
+import demo_setup  # noqa: E402
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 EVAL_DIR = BASE_DIR / "data" / "evaluation"
@@ -149,6 +154,9 @@ def action_box(action: Optional[str], text: str) -> None:
 
 
 def apply_page_style(title: str, subtitle: str) -> None:
+    """Page header. Also runs the one-time demo start-up and shows the demo note,
+    so it must be called before any backend import on the page."""
+    demo_setup.ensure_demo_ready()
     st.markdown(
         """
         <style>
@@ -162,7 +170,8 @@ def apply_page_style(title: str, subtitle: str) -> None:
         """,
         unsafe_allow_html=True,
     )
+    demo_setup.show_demo_note()
     st.title(title)
     st.markdown(f'<div class="vf-sub">{subtitle}</div>', unsafe_allow_html=True)
     if not backend_online():
-        st.caption("Backend offline — using the local database directly.")
+        st.caption("Standalone mode — running without the API, straight on the local database.")

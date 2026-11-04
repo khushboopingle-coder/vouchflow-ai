@@ -38,6 +38,10 @@ against purchase orders (PO), goods received notes (GRN) and supplier contracts
 - `dashboard/app.py` — Streamlit main ledger page (left unchanged in Phase 8)
 - `dashboard/pages/` — `1_Investigation.py`, `2_Approvals.py`, `3_Evals.py` (Evals is read-only)
 - `dashboard/ui_common.py` — shared helpers: API first, falls back to services on local DB
+- `dashboard/demo_setup.py` — demo start-up (Streamlit Cloud): copies Gemini secrets to env,
+  seeds an EMPTY database from `mock_data.json` (invoices 1–50), checks + investigates
+  6 demo invoices (extraction only if a key exists). Never runs the generator scripts
+  (they rewrite ground truth). Called from `app.py` and `ui_common.apply_page_style`.
 - `data/` — `invoices/` (PDFs), `contracts/` (8 txt), `evaluation/` (ground truth + results CSVs)
 - `scripts/` — data generation, DB seeding, eval scripts
 - `tests/` — pytest suite (Gemini is mocked, runs offline)
@@ -54,6 +58,12 @@ python -m pytest -q                      # tests
 python scripts/run_extraction_eval.py    # evals: also run_matching_eval, run_contract_rag_eval,
 python scripts/run_agent_eval.py         #        eval_hard_v2
 ```
+
+## Deploy (Streamlit Community Cloud)
+- Main file path: `dashboard/app.py` · Python 3.12 · `requirements.txt` is pinned
+- No API, no .env, no key needed (agent uses template explanation). Optional key:
+  add `GEMINI_API_KEY` in the app's Secrets (visitors would then use that quota).
+- Cloud DB is temporary; it re-seeds itself after a restart. Peak memory ~470 MB locally.
 
 ## Phases
 - Done: Foundation, Phase 1 reader, Phases 2–3 checker, Phase 4 contract search,

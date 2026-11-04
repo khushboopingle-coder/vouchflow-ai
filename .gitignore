@@ -32,3 +32,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Streamlit secrets (may hold GEMINI_API_KEY) - never commit
+.streamlit/secrets.toml
