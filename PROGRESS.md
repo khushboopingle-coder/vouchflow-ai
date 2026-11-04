@@ -1,7 +1,7 @@
 # VouchFlow AI — Progress
 
 Follows `VOUCHFLOW_MASTER_PLAN.md` (Phases 2–7). One commit per phase.
-**Continue from:** Phase 3 (Phase 2 is done and pushed).
+**Continue from:** Phase 4 (Phases 2 and 3 are done and pushed).
 
 ---
 
@@ -76,9 +76,56 @@ API: `python -m uvicorn backend.main:app --reload`, then in http://127.0.0.1:800
 
 ---
 
+## Phase 3 — Bring your own data, and fair AI limits ✅
+**What was built**
+- **My data page** (sidebar menu): tabs for Invoices (PDF/PNG/JPG, several at once), Purchase
+  orders (CSV), Goods received (CSV), Contract prices (CSV), Contract documents (TXT/PDF).
+  Each CSV tab has a **Download template** button. All files go into the user's own workspace.
+- **Clear errors:** wrong type, empty file, fake file (content does not match the extension),
+  too large (>10 MB), missing CSV columns, bad dates/numbers/quantities, unknown PO in a GRN,
+  duplicate PO/GRN numbers. CSV imports are all-or-nothing and list every problem with its
+  row number (first 25 shown). PO/GRN numbers may repeat across different workspaces.
+- **Files** live in git-ignored `data/workspaces/<id>/` (invoices and contracts). The contract
+  search index is kept in memory and rebuilt on first use (no locked files on Windows).
+- **Contract search per workspace:** each workspace gets its own Chroma index. A user's uploaded
+  contracts are searchable only by them; the sample contracts are included only while the
+  workspace holds the sample data; an empty workspace finds nothing. The shared "sample"
+  index and the evals are unchanged. The Investigation Agent searches the invoice's own workspace.
+- **Demo vs Live:** the banner and the sidebar badge say "Demo data" only while the workspace
+  holds the sample copy and nothing else. Any upload, or an empty workspace, shows
+  "Live workspace" (no banner).
+- **AI limits:** the explanation is the template (`llm_used=False`) by default. On the
+  Investigation page a checkbox "Use AI explanation (Gemini) - N of 5 left today" (disabled when
+  there is no key or no quota left). Only explanations Gemini really wrote are counted in the
+  new `ai_usage` table; a Gemini failure or the limit silently gives the template.
+  API: `POST /invoices/{id}/investigate?use_ai=true`.
+- **Workspace tools** (sidebar): Load sample data (empty workspace) / **Reset to sample data**
+  (tick to confirm) and **Delete my workspace** (type DELETE; removes data, files, index and
+  the login account, then logs out).
+- Migration `0003` (workspace flags, `ai_usage`); applied to local SQLite and Neon.
+
+**Decisions I made**
+- Reading an uploaded invoice with Gemini ("Read with AI") also counts against the 5 daily AI
+  actions, because it is a real Gemini call; without a key it is simply unavailable.
+- Contract prices uploaded as CSV feed the price check; contract documents (TXT/PDF) feed the
+  contract search - two separate things, as in the sample data.
+- Scanned (image-only) PDFs cannot be used as contract documents - they have no text to search.
+- Evals and the shared sample index keep using the original code path on purpose.
+
+**Tests:** `tests/test_uploads.py`, `tests/test_contract_search_workspaces.py`,
+`tests/test_ai_limits.py` (Gemini is faked; never really called).
+
+**How to test it yourself**
+```
+python -m pytest -q
+streamlit run dashboard/app.py
+```
+Create an account (untick "Start with sample data") -> badge says "Live workspace" -> **My data**:
+download the three CSV templates and upload them -> upload a PDF invoice -> upload a contract
+.txt with a supplier name -> Investigation page shows the AI checkbox. A second account never sees
+these. Sidebar -> Workspace tools -> Reset to sample data / Delete my workspace.
+
 ## What is left
-- **Phase 3** — upload own invoices / PO + GRN CSV / contracts, per-workspace contract search,
-  "Demo data" vs "Live workspace", 5 Gemini explanations per user per day, reset/delete workspace.
 - **Phase 4** — ingest API with workspace API keys (Settings page), summary endpoint, rate limit.
 - **Phase 5** — n8n workflows (Gmail + webhook), beginner n8n README, sample invoice.
 - **Phase 6** — Docker, docker-compose, render.yaml, secrets example, startup check, DEPLOY.md.
@@ -86,8 +133,8 @@ API: `python -m uvicorn backend.main:app --reload`, then in http://127.0.0.1:800
 
 ## Final acceptance checklist
 - [x] Two different users cannot see each other's data (tests prove it)
-- [ ] Sample data loads in one click; the Demo banner shows only on sample (banner rule: Phase 3)
-- [ ] User can upload their own invoice, PO, GRN and contract
+- [x] Sample data loads in one click; the Demo banner shows only on sample
+- [x] User can upload their own invoice, PO, GRN and contract
 - [ ] Ingest API works with an API key; wrong key gives 401
 - [ ] n8n workflow files and README are in the repo
 - [ ] Docker and DEPLOY.md are ready

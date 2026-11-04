@@ -24,7 +24,7 @@ ui.apply_page_style(
     "then explains what it found. It never approves or pays.",
 )
 
-from backend.services import invoice_service  # noqa: E402
+from backend.services import ai_usage_service, invoice_service  # noqa: E402
 
 WS = ui.workspace_id()  # the logged-in user's workspace: every call below uses it
 
@@ -50,10 +50,25 @@ with button_col:
     st.write("")
     run_clicked = st.button("Run investigation", type="primary", width="stretch")
 
+# Phase 3: the template explanation is the default; Gemini only on request, 5 per user per day
+USER_ID = ui.current_account()["user_id"]
+ok_left, left = ui.run_db(lambda db: ai_usage_service.remaining_today(db, USER_ID))
+left = left if ok_left else 0
+ai_on = ai_usage_service.ai_available()
+use_ai = st.checkbox(
+    f"Use AI explanation (Gemini) — {left} of {ai_usage_service.DAILY_AI_LIMIT} left today",
+    value=False, key="use_ai_explanation", disabled=not ai_on or left == 0,
+    help="Off: a clear template explanation, written from the same evidence. On: Gemini writes it "
+         "(checked by the grounding guardrail). Falls back to the template if Gemini fails.",
+)
+if not ai_on:
+    st.caption("AI explanations are switched off on this server, so the template explanation is used.")
+
 if run_clicked:
     with st.spinner("Agent is investigating... this can take up to a minute."):
         ok, data = ui.run_db(lambda db: invoice_service.investigate_invoice(
-            db=db, invoice_id=invoice_id, workspace_id=WS, who=ui.current_account()["email"]))
+            db=db, invoice_id=invoice_id, workspace_id=WS, who=ui.current_account()["email"],
+            use_ai=use_ai, user_id=USER_ID))
     if ok:
         st.success("Investigation finished. It is now waiting on the Approvals page.")
     else:

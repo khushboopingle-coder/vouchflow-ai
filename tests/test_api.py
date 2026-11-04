@@ -113,7 +113,7 @@ def test_upload_invoice_endpoint(client, api_user):
         db.close()
 
     # Clean up uploaded test file
-    uploaded_file_path = Path("data/invoices") / data["file_name"]
+    uploaded_file_path = Path(data["file_path"])  # data/workspaces/<id>/invoices/...
     if uploaded_file_path.exists():
         uploaded_file_path.unlink()
 

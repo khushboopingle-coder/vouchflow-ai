@@ -73,6 +73,11 @@ _NOT_FOUND_SKIP_SECONDS = 86400  # skip a missing model for 24 hours
 # Workspace of the invoice being investigated (set by run_investigation), so every audit
 # row the agent writes belongs to that workspace. A ContextVar keeps parallel runs apart.
 _AUDIT_WORKSPACE: ContextVar[Optional[int]] = ContextVar("vouchflow_audit_workspace", default=None)
+# Phase 3: may this run ask Gemini for the explanation?
+#   None  -> old behaviour (LLM if a key exists and it is not disabled) - direct callers, evals
+#   False -> always the deterministic template (default for the dashboard and API)
+#   True  -> allowed (the service checked the user's daily AI limit first)
+_ALLOW_LLM: ContextVar[Optional[bool]] = ContextVar("vouchflow_allow_llm", default=None)
 
 
 def log_audit_step(db: Optional[Session], who: str, action: str, details: str) -> None:
@@ -234,7 +239,8 @@ def search_contract_clauses(state: InvestigationState) -> Dict[str, Any]:
 
     # Supplier-scoped contract searches
     for q_spec in queries_to_run:
-        res = search_contract(query=q_spec["query"], supplier_name=supplier_name)
+        res = search_contract(query=q_spec["query"], supplier_name=supplier_name,
+                              workspace_id=_AUDIT_WORKSPACE.get())
         status = res.get("status", "not_found")
         raw_source = res.get("source")
         answer = res.get("answer", "")
@@ -764,7 +770,10 @@ def write_explanation(state: InvestigationState) -> Dict[str, Any]:
     explanation_text = ""
     cache_key = _make_cache_key(invoice_id, findings, citations)
 
-    if cache_key in _EXPLANATION_CACHE:
+    if _ALLOW_LLM.get() is False:
+        # Default for the dashboard/API: deterministic template, no Gemini call (llm_used=False)
+        explanation_text = template_explanation
+    elif cache_key in _EXPLANATION_CACHE:
         explanation_text = _EXPLANATION_CACHE[cache_key]
         llm_used = True
         log_audit_step(
@@ -994,6 +1003,7 @@ def run_investigation(
     invoice_id: int,
     db: Session,
     who: str = "investigation_agent",
+    allow_llm: Optional[bool] = None,
 ) -> InvestigationReport:
     """
     Runs the LangGraph investigation workflow end-to-end for one invoice.
@@ -1027,9 +1037,11 @@ def run_investigation(
     if db is not None:
         workspace_id = db.query(Invoice.workspace_id).filter(Invoice.id == invoice_id).scalar()
     token = _AUDIT_WORKSPACE.set(workspace_id)
+    llm_token = _ALLOW_LLM.set(allow_llm)
     try:
         final_state = investigation_app.invoke(initial_state)
     finally:
+        _ALLOW_LLM.reset(llm_token)
         _AUDIT_WORKSPACE.reset(token)
     report_dict = final_state.get("report")
     if not report_dict:

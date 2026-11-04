@@ -29,10 +29,13 @@ against purchase orders (PO), goods received notes (GRN) and supplier contracts
   `POST /invoices/{id}/decision`, `GET /approvals/queue`, `GET /approvals/decisions`
 - `backend/config.py` — settings from `.env`; `database_url`, `is_sqlite`, `database_kind`
 - `backend/database/db.py` — engine; `init_db()`: SQLite -> create_all, PostgreSQL -> Alembic upgrade
-- `migrations/versions/` — `0001` all 13 tables; `0002` users + workspaces (+ "sample")
+- `migrations/versions/` — `0001` all 13 tables; `0002` users + workspaces (+ "sample");
+  `0003` workspace flags (sample_loaded, has_user_data) + `ai_usage`
 - `backend/auth/` — bcrypt `passwords.py`, signed API `tokens.py` (VOUCHFLOW_SECRET_KEY),
   `dependencies.py` (`current_account`: Bearer token -> 401)
-- `backend/services/auth_service.py` (signup/login) and `workspace_service.py`
+- `backend/services/upload_service.py` (Phase 3: validated uploads + all-or-nothing CSV imports,
+  files in git-ignored `data/workspaces/<id>/`), `ai_usage_service.py` (5 Gemini explanations/user/day;
+  default explanation is the template), `auth_service.py` (signup/login), `workspace_service.py`
   (`require_invoice` gate, sample workspace, load/clear/delete workspace data)
 - `backend/database/` — `db.py` (engine/session), `models.py` (tables), `schemas.py` (Pydantic)
 - `backend/services/invoice_service.py` — business logic + audit logging
@@ -47,6 +50,7 @@ against purchase orders (PO), goods received notes (GRN) and supplier contracts
 - `dashboard/app.py` — entry point / router (Streamlit Cloud main file): `st.navigation`
   (hidden) + own sidebar menu via `st.page_link`; Home, Investigation, Approvals, Evals
 - `dashboard/home.py` — Home page: KPI cards, invoice ledger, invoice inspection
+- `dashboard/views/data.py` — "My data": uploads + CSV templates (Phase 3)
 - `dashboard/views/login.py` — `render()` login/signup screen (router shows it for every URL
   while logged out)
 - `.streamlit/config.toml` — light theme + DM Sans font; colours must equal `ui_common.PALETTE`
@@ -90,7 +94,7 @@ python scripts/run_agent_eval.py         #        eval_hard_v2
 - Done: Foundation, Phase 1 reader, Phases 2–3 checker, Phase 4 contract search,
   Phase 5 agent with guardrails and evals (agent 20/20 on test set),
   Phase 8 dashboard pages (Investigation, Approvals, Evals) + approvals backend.
-- Master plan (VOUCHFLOW_MASTER_PLAN.md): Phase 2 login + workspaces DONE; see PROGRESS.md.
+- Master plan (VOUCHFLOW_MASTER_PLAN.md): Phases 2 (login + workspaces) and 3 (own data + AI limits) DONE; see PROGRESS.md.
 - Pending idea (not done, needs OK): switch `langchain_community.vectorstores.Chroma`
   to `langchain_chroma` package.
 
@@ -100,6 +104,9 @@ python scripts/run_agent_eval.py         #        eval_hard_v2
   services directly with `ui.workspace_id()`; the API uses `current_account`.
 - Tests: `tests/helpers.py::temp_user()` gives a throw-away user with a sample copy
   (`user.ids[1]` = their copy of sample invoice 1); `api_user` fixture in conftest.
+- Contract search per workspace: `ask_contract(..., workspace_id=)`; user workspaces get an IN-MEMORY
+  Chroma index (sample contracts only if `sample_loaded`, plus their own uploads). Demo banner/badge only
+  when `workspace_service.is_demo(ws)`.
 - PROGRESS.md tracks the master plan (Phases 2-7) and where to continue.
 - `.env` has TWO `DATABASE_URL` lines (line 2 SQLite, line 8 Neon); the last one wins -> Neon.
 - Tests are forced to SQLite by `tests/conftest.py` (set `TEST_DATABASE_URL` to override).

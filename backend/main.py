@@ -246,11 +246,17 @@ def list_audit_logs(
     summary="Run Investigation Agent workflow on an invoice",
     tags=["Investigation"]
 )
-def investigate_invoice_endpoint(invoice_id: int, db: Session = Depends(get_db),
-                                 account: Account = Depends(current_account)):
+def investigate_invoice_endpoint(
+    invoice_id: int,
+    use_ai: bool = Query(False, description="Ask Gemini to write the explanation (max 5 per user per day; "
+                                            "otherwise the deterministic template is used)"),
+    db: Session = Depends(get_db),
+    account: Account = Depends(current_account),
+):
     """Runs the Investigation Agent (LangGraph). The agent never approves or pays."""
     return invoice_service.investigate_invoice(
-        db=db, invoice_id=invoice_id, workspace_id=account.workspace_id, who=account.email
+        db=db, invoice_id=invoice_id, workspace_id=account.workspace_id, who=account.email,
+        use_ai=use_ai, user_id=account.user_id,
     )
 
 

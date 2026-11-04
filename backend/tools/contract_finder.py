@@ -33,12 +33,14 @@ KNOWN_CONTRACT_SUPPLIERS = [
 ]
 
 
-def find_matching_supplier(supplier_name: Optional[str]) -> Optional[str]:
-    """Matches a vendor name to the known indexed contract suppliers in ChromaDB."""
+def find_matching_supplier(supplier_name: Optional[str],
+                           candidates: Optional[List[str]] = None) -> Optional[str]:
+    """Matches a vendor name to the indexed contract suppliers (default: the sample suppliers;
+    Phase 3: a workspace passes the suppliers of its own index)."""
     if not supplier_name:
         return None
     s_norm = "".join(c for c in supplier_name.lower() if c.isalnum())
-    for cand in KNOWN_CONTRACT_SUPPLIERS:
+    for cand in (KNOWN_CONTRACT_SUPPLIERS if candidates is None else candidates):
         c_norm = "".join(c for c in cand.lower() if c.isalnum())
         first_token = supplier_name.strip().split()[0].lower()
         cand_first_token = cand.strip().split()[0].lower()
@@ -313,7 +315,8 @@ def ask_contract(
     question: str,
     vector_store: Optional[Chroma] = None,
     top_k: int = 4,
-    supplier_name: Optional[str] = None
+    supplier_name: Optional[str] = None,
+    workspace_id: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Retrieves the best matching contract clause for a given query.
     If supplier_name is provided, scopes the search strictly to that supplier's contract.
@@ -325,13 +328,22 @@ def ask_contract(
     - sources: Always a list of matching source strings.
     - distance: L2 distance score from Chroma.
     """
+    known_suppliers: Optional[List[str]] = None
+    if vector_store is None and workspace_id is not None:
+        # Phase 3: a user workspace only searches ITS OWN contracts (+ the sample ones if it
+        # holds the sample data). The sample workspace keeps using the shared index.
+        is_sample, include_sample = _workspace_contract_scope(workspace_id)
+        if not is_sample:
+            vector_store, known_suppliers = get_workspace_vector_store(workspace_id, include_sample)
+            if vector_store is None:
+                return dict(_NOT_FOUND)
     vs = vector_store or get_vector_store()
     
     # -------------------------------------------------------------------------
     # Supplier-Scoped Search (Investigation Agent Mode)
     # -------------------------------------------------------------------------
     if supplier_name:
-        matched_supplier = find_matching_supplier(supplier_name)
+        matched_supplier = find_matching_supplier(supplier_name, known_suppliers)
         if not matched_supplier:
             return {
                 "answer": "no source found",
@@ -452,3 +464,120 @@ def ask_contract(
             "supplier_name": best_doc.metadata.get("supplier_name")
         }
     }
+
+
+# =============================================================================
+# Phase 3: contract search per workspace
+# =============================================================================
+_NOT_FOUND: Dict[str, Any] = {
+    "answer": "no source found",
+    "source": "no source found",
+    "sources": [],
+    "status": "not_found",
+    "distance": 999.0,
+    "matched_clause": None,
+}
+# workspace_id -> (vector store or None, supplier names in that index)
+_WS_STORES: Dict[int, Tuple[Optional[Chroma], List[str]]] = {}
+UPLOADED_CHUNK_CHARS = 900
+
+
+def _workspace_root(workspace_id: int) -> Path:
+    from backend.services.workspace_service import workspace_dir
+
+    return workspace_dir(workspace_id)
+
+
+def workspace_contracts_dir(workspace_id: int) -> Path:
+    """Where a workspace's uploaded contracts are stored as .txt (git-ignored).
+    The search index itself is kept in memory (see get_workspace_vector_store)."""
+    return _workspace_root(workspace_id) / "contracts"
+
+
+def _workspace_contract_scope(workspace_id: int) -> Tuple[bool, bool]:
+    """(is the sample workspace?, does it hold the sample data?) for one workspace."""
+    from backend.database.db import SessionLocal
+    from backend.database.models import Workspace
+
+    db = SessionLocal()
+    try:
+        ws = db.query(Workspace).filter(Workspace.id == workspace_id).first()
+        if ws is None:
+            return False, False
+        return bool(ws.is_sample), bool(ws.sample_loaded)
+    finally:
+        db.close()
+
+
+def parse_uploaded_contract(file_path: Path) -> List[Document]:
+    """A user's contract: clause-level chunks when it follows the sample layout, otherwise
+    paragraph chunks ("Section 1", "Section 2", ...). The supplier comes from the
+    "Supplier:" line written at upload time."""
+    docs = parse_contract_clauses(file_path)
+    if len(docs) > 2:  # header + at least two recognised clauses
+        return docs
+    text = file_path.read_text(encoding="utf-8")
+    supplier = docs[0].metadata["supplier_name"] if docs else "Unknown Supplier"
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+    chunks: List[str] = []
+    current = ""
+    for para in paragraphs:
+        if current and len(current) + len(para) > UPLOADED_CHUNK_CHARS:
+            chunks.append(current)
+            current = ""
+        current = f"{current}\n\n{para}".strip()
+    if current:
+        chunks.append(current)
+    result = docs[:1]
+    for i, chunk in enumerate(chunks, 1):
+        title = chunk.splitlines()[0][:80]
+        result.append(Document(
+            page_content=f"Supplier: {supplier} | Contract: {file_path.name} | Section {i}: {title}\n{chunk}",
+            metadata={
+                "file_name": file_path.name,
+                "source": file_path.name,
+                "clause_number": f"Section {i}",
+                "clause_title": title,
+                "supplier_name": supplier,
+                "category": "uploaded",
+            },
+        ))
+    return result
+
+
+def get_workspace_vector_store(workspace_id: int, include_sample: bool) -> Tuple[Optional[Chroma], List[str]]:
+    """The contract index of ONE workspace (built on first use, then cached).
+    Returns (None, []) when the workspace has no contracts at all."""
+    cached = _WS_STORES.get(workspace_id)
+    if cached is not None:
+        return cached
+
+    docs: List[Document] = []
+    if include_sample:
+        for cf in sorted(DEFAULT_CONTRACTS_DIR.glob("*.txt")):
+            docs.extend(parse_contract_clauses(cf))
+    uploads = workspace_contracts_dir(workspace_id)
+    if uploads.exists():
+        for cf in sorted(uploads.glob("*.txt")):
+            docs.extend(parse_uploaded_contract(cf))
+    if not docs:
+        _WS_STORES[workspace_id] = (None, [])
+        return _WS_STORES[workspace_id]
+
+    # The index lives in memory (no files): it is small, rebuilt on first use after a restart,
+    # and nothing stays locked on disk when a workspace is reset or deleted (Windows).
+    name = f"ws_{int(workspace_id)}_contracts"
+    embedding = get_embedding_model()
+    try:  # start from an empty collection, so a rebuild never duplicates chunks
+        Chroma(collection_name=name, embedding_function=embedding).delete_collection()
+    except Exception:
+        pass
+    store = Chroma.from_documents(documents=docs, embedding=embedding, collection_name=name)
+    suppliers = sorted({d.metadata.get("supplier_name", "") for d in docs} - {"", "Unknown Supplier"})
+    _WS_STORES[workspace_id] = (store, suppliers)
+    return _WS_STORES[workspace_id]
+
+
+def invalidate_workspace_store(workspace_id: int) -> None:
+    """Forget a workspace's index (after an upload, reset or delete); rebuilt on next search."""
+    _WS_STORES.pop(workspace_id, None)

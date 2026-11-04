@@ -77,7 +77,7 @@ def test_migration_builds_all_tables_and_matches_models(tmp_path):
     finally:
         con.close()
     assert {t.name for t in Base.metadata.sorted_tables} | {"alembic_version"} == tables
-    assert version == "0002"
+    assert version == "0003"
 
     check = _alembic(db_path, "check")  # fails if a model changed without a new migration
     assert check.returncode == 0, check.stdout + check.stderr

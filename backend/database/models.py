@@ -304,4 +304,19 @@ class Workspace(Base):
     name = Column(String(255), nullable=False)
     owner_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, unique=True, index=True)
     is_sample = Column(Boolean, default=False, nullable=False)
+    # Phase 3: "Demo data" badge/banner only while the workspace holds the sample copy and
+    # nothing the user added. Any upload sets has_user_data -> "Live workspace".
+    sample_loaded = Column(Boolean, default=False, nullable=False)
+    has_user_data = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class AIUsage(Base):
+    """Phase 3: how many real Gemini explanations a user got on one day (limit: 5/day)."""
+    __tablename__ = "ai_usage"
+    __table_args__ = (UniqueConstraint("user_id", "day", name="uq_ai_usage_user_day"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    day = Column(Date, nullable=False)
+    count = Column(Integer, default=0, nullable=False)

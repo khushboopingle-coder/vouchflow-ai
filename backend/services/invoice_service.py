@@ -42,7 +42,7 @@ from backend.agent.state import InvestigationReport
 from backend.agent.graph import run_investigation
 from backend.tools.invoice_reader import reader
 from backend.tools.matcher import perform_three_way_match
-from backend.services import workspace_service
+from backend.services import workspace_service, ai_usage_service
 
 
 def list_invoices(
@@ -145,83 +145,19 @@ def save_uploaded_invoice(
     who: str = "web_user"
 ) -> UploadResponse:
     """
-    Saves an uploaded invoice PDF or image into data/invoices/, creates a new
-    invoice row with status 'needs_review', and records an entry in audit_logs.
+    Saves an uploaded invoice PDF or image into the workspace's own folder
+    (data/workspaces/<id>/invoices/), creates a new invoice row with status 'needs_review'
+    and records an audit entry. The checks (type, size, real file signature) live in
+    backend/services/upload_service.py; a bad file answers 400 with a clear message.
     """
-    # Validate file extension
-    allowed_extensions = {".pdf", ".png", ".jpg", ".jpeg"}
-    original_filename = file.filename or "uploaded_invoice.pdf"
-    file_ext = Path(original_filename).suffix.lower()
+    from backend.services import upload_service
 
-    if file_ext not in allowed_extensions:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid file type '{file_ext}'. Allowed types: {', '.join(allowed_extensions)}"
-        )
-
-    # Destination directory: data/invoices/
-    invoices_dir = settings.data_path / "invoices"
-    invoices_dir.mkdir(parents=True, exist_ok=True)
-
-    # Sanitize and prepare destination file path
-    safe_basename = Path(original_filename).stem.replace(" ", "_")
-    target_filename = f"{safe_basename}{file_ext}"
-    target_path = invoices_dir / target_filename
-
-    # If file with this name already exists, add an incremental index
-    counter = 1
-    while target_path.exists():
-        target_filename = f"{safe_basename}_{counter}{file_ext}"
-        target_path = invoices_dir / target_filename
-        counter += 1
-
-    # Save file to disk
+    data = file.file.read() if hasattr(file.file, "read") else bytes(file.file)
     try:
-        with open(target_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Could not save file to disk: {str(e)}"
-        )
-
-    # Relative path stored in database
-    relative_file_path = f"data/invoices/{target_filename}"
-
-    # Create new Invoice record with status 'needs_review'
-    new_invoice = Invoice(
-        invoice_number=safe_basename.upper(),
-        supplier_id=None,
-        po_id=None,
-        invoice_date=date.today(),
-        subtotal=0.0,
-        tax_amount=0.0,
-        grand_total=0.0,
-        file_path=relative_file_path,
-        status="needs_review",  # New uploads default to 'needs_review'
-        workspace_id=workspace_id,
-    )
-    db.add(new_invoice)
-    db.flush()  # Acquire generated primary key id
-
-    # Create Audit Log entry for this upload
-    audit_entry = AuditLog(
-        who=who,
-        workspace_id=workspace_id,
-        action="invoice_upload",
-        details=f"Uploaded file '{original_filename}' saved to '{relative_file_path}'. Created Invoice ID {new_invoice.id} with status 'needs_review'."
-    )
-    db.add(audit_entry)
-    db.commit()
-    db.refresh(new_invoice)
-
-    return UploadResponse(
-        message="Invoice uploaded successfully and queued for review.",
-        invoice_id=new_invoice.id,
-        file_name=target_filename,
-        status=new_invoice.status,
-        file_path=relative_file_path
-    )
+        return upload_service.save_invoice_file(db, workspace_id, file.filename or "uploaded_invoice.pdf",
+                                                data, who=who)
+    except upload_service.UploadError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 def extract_invoice_data(
@@ -436,17 +372,23 @@ def investigate_invoice(
     db: Session,
     invoice_id: int,
     workspace_id: int,
-    who: str = "api_user"
+    who: str = "api_user",
+    use_ai: bool = False,
+    user_id: Optional[int] = None,
 ) -> InvestigationReport:
     """
     Executes the Investigation Agent LangGraph workflow for an invoice.
     Persists the report in invoice_investigations table.
+    Phase 3: the explanation is the template unless use_ai=True AND the user still has
+    AI explanations left today (5/day); then Gemini may write it (template on any failure).
     NOTE: Invoice status is NOT modified; the agent never decides to approve or pay.
     """
     inv = workspace_service.require_invoice(db, invoice_id, workspace_id)  # 404 if not ours
 
-    # Run LangGraph workflow
-    report = run_investigation(invoice_id=invoice_id, db=db, who=who)
+    allow_llm = bool(use_ai and user_id is not None and ai_usage_service.may_use_ai(db, user_id))
+    report = run_investigation(invoice_id=invoice_id, db=db, who=who, allow_llm=allow_llm)
+    if allow_llm and report.llm_used:
+        ai_usage_service.record_ai_use(db, user_id)  # count only real AI explanations
 
     # Persist report in invoice_investigations table
     investigation_record = InvoiceInvestigation(

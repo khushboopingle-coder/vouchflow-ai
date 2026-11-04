@@ -9,17 +9,24 @@ child rows (line items, extractions, checks, investigations) follow their parent
 - load_sample_data(): copy the sample data into a user's workspace (new ids, links kept)
 - clear_workspace_data() / delete_workspace(): remove a workspace's data / the workspace
 - require_invoice(): the single gate every service uses before touching an invoice
+- Phase 3: workspace_dir() for uploaded files (git-ignored), is_demo() for the
+  "Demo data" vs "Live workspace" label, mark_user_data() after any upload
 """
 
 import json
+import shutil
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Optional
+
+from backend.config import settings
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.database.models import (
+    AIUsage,
     AuditLog,
     Contract,
     GoodsReceivedNote,
@@ -80,6 +87,37 @@ def workspace_invoice_count(db: Session, workspace_id: int) -> int:
 
 
 # ---------------------------------------------------------------------
+# Phase 3: files, demo flag
+# ---------------------------------------------------------------------
+def workspace_dir(workspace_id: int) -> Path:
+    """Folder for this workspace's own files: invoices/ and contracts/ (git-ignored)."""
+    return settings.data_path / "workspaces" / str(int(workspace_id))
+
+
+def is_demo(ws: Optional[Workspace]) -> bool:
+    """True only while the workspace holds the sample copy and nothing the user added."""
+    return bool(ws and ws.sample_loaded and not ws.has_user_data)
+
+
+def mark_user_data(db: Session, workspace_id: int) -> None:
+    ws = get_workspace(db, workspace_id)
+    if ws is not None and not ws.has_user_data:
+        ws.has_user_data = True
+        db.commit()
+
+
+def _forget_workspace_files(workspace_id: int) -> None:
+    """Drops the workspace's in-memory contract index and its uploaded files."""
+    try:
+        from backend.tools import contract_finder
+
+        contract_finder.invalidate_workspace_store(workspace_id)
+    except Exception:
+        pass
+    shutil.rmtree(workspace_dir(workspace_id), ignore_errors=True)
+
+
+# ---------------------------------------------------------------------
 # Clearing / deleting
 # ---------------------------------------------------------------------
 def clear_workspace_data(db: Session, workspace_id: int, keep_audit_logs: bool = True,
@@ -108,7 +146,12 @@ def clear_workspace_data(db: Session, workspace_id: int, keep_audit_logs: bool =
     db.query(Supplier).filter(Supplier.workspace_id == workspace_id).delete(synchronize_session=False)
     if not keep_audit_logs:
         db.query(AuditLog).filter(AuditLog.workspace_id == workspace_id).delete(synchronize_session=False)
+    if not ws.is_sample:
+        ws.sample_loaded = False
+        ws.has_user_data = False
     db.commit()
+    if not ws.is_sample:
+        _forget_workspace_files(workspace_id)
 
 
 def delete_workspace(db: Session, workspace_id: int, delete_owner: bool = True) -> None:
@@ -124,6 +167,7 @@ def delete_workspace(db: Session, workspace_id: int, delete_owner: bool = True) 
     db.delete(ws)
     db.commit()
     if delete_owner and owner_id is not None:
+        db.query(AIUsage).filter(AIUsage.user_id == owner_id).delete(synchronize_session=False)
         db.query(User).filter(User.id == owner_id).delete(synchronize_session=False)
         db.commit()
 
@@ -197,5 +241,8 @@ def _copy_sample_rows(db: Session, sample_id: int, workspace_id: int, who: str) 
         who=who, action="sample_data_loaded", workspace_id=workspace_id,
         details=f"Copied {len(inv_map)} sample invoices into this workspace.",
     ))
+    ws = get_workspace(db, workspace_id)
+    ws.sample_loaded = True       # "Demo data" until the user adds something
+    ws.has_user_data = False
     db.commit()
     return maps

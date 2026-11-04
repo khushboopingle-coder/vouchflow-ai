@@ -219,14 +219,16 @@ def get_po_and_grn(invoice_id: int, db: Session) -> Dict[str, Any]:
     }
 
 
-def search_contract(query: str, supplier_name: Optional[str] = None) -> Dict[str, Any]:
+def search_contract(query: str, supplier_name: Optional[str] = None,
+                    workspace_id: Optional[int] = None) -> Dict[str, Any]:
     """
     Read-only tool: Uses the contract finder RAG tool to search master contracts
     for clauses governing prices, penalties, delivery, or terms.
-    Strictly scopes search to supplier_name if provided.
+    Strictly scopes search to supplier_name if provided, and (Phase 3) to the contracts
+    of workspace_id when given.
     Does not modify data, send email, or execute financial transactions.
     """
-    result = ask_contract(question=query, supplier_name=supplier_name)
+    result = ask_contract(question=query, supplier_name=supplier_name, workspace_id=workspace_id)
     return {
         "query": query,
         "supplier_name": supplier_name,

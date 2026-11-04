@@ -13,7 +13,7 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 APP = str(Path(__file__).resolve().parent.parent / "dashboard" / "app.py")
-VIEWS = ["views/investigation.py", "views/approvals.py", "views/evals.py"]
+VIEWS = ["views/investigation.py", "views/approvals.py", "views/evals.py", "views/data.py"]
 
 
 def _has_brand(at) -> bool:
@@ -22,6 +22,16 @@ def _has_brand(at) -> bool:
 
 def _has_banner(at) -> bool:
     return any('class="demo-banner"' in m.value for m in at.main.markdown)
+
+
+@pytest.fixture(scope="module")
+def api_user():
+    """This module's OWN user (a fresh sample copy, so the "Demo data" banner shows). The shared
+    session-wide api_user may already hold uploads from other tests and then counts as live."""
+    from tests.helpers import temp_user
+
+    with temp_user() as user:
+        yield user
 
 
 @pytest.fixture(scope="module")
@@ -68,3 +78,33 @@ def test_logged_out_visitor_only_sees_login(view):
     assert not at.exception
     assert not _has_brand(at) and not _has_banner(at)  # no workspace content at all
     assert [t.label for t in at.tabs] == ["Log in", "Create account"]
+
+
+def test_banner_and_badge_follow_demo_vs_live():
+    """Sample copy only -> "Demo data" + banner; after the user adds data -> "Live workspace", no banner."""
+    from backend.database.db import SessionLocal
+    from backend.services import upload_service
+    from tests.helpers import temp_user
+
+    badge = lambda at: " ".join(str(getattr(e, "value", "")) for e in at.sidebar)  # noqa: E731
+
+    with temp_user() as user:
+        at = AppTest.from_file(APP, default_timeout=180)
+        at.session_state["auth"] = user.session_auth
+        at.run()
+        assert "Demo data" in badge(at) and _has_banner(at)
+
+        db = SessionLocal()
+        try:
+            upload_service.save_invoice_file(db, user.workspace_id, "mine.pdf", b"%PDF-1.4 my own invoice")
+        finally:
+            db.close()
+        at.run()
+        assert "Live workspace" in badge(at) and "Demo data" not in badge(at)
+        assert not _has_banner(at)
+
+    with temp_user(load_sample=False) as empty:  # nothing loaded: also a live workspace
+        at = AppTest.from_file(APP, default_timeout=180)
+        at.session_state["auth"] = empty.session_auth
+        at.run()
+        assert "Live workspace" in badge(at) and not _has_banner(at)

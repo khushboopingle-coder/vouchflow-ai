@@ -348,6 +348,8 @@ a, a:visited { color: $accent; }
     background: $card; border: 1px solid $card_border; }
 .account-email { color: $text; font-size: .8rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
 .account-ws { color: $muted; font-size: .72rem; }
+.demo-badge.live { color: $verified; border-color: $card_border; background: $card; }
+.danger-note { color: $mismatch_detected; font-size: .78rem; font-weight: 700; }
 .demo-badge {
     display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; margin: .2rem 0 .9rem;
     border-radius: 999px; font-size: .72rem; font-weight: 700; letter-spacing: .02em;
@@ -535,9 +537,31 @@ def apply_global_css() -> None:
 # ---------------------------------------------------------------------
 # Shared page parts
 # ---------------------------------------------------------------------
+def workspace_flags() -> Dict[str, Any]:
+    """{"is_demo", "invoice_count", "sample_loaded", "has_user_data"} for the logged-in workspace.
+    Demo = the sample copy and nothing the user added (Phase 3)."""
+    from backend.services import workspace_service
+
+    ws = workspace_id()
+
+    def _read(db):
+        w = workspace_service.get_workspace(db, ws)
+        return {
+            "is_demo": workspace_service.is_demo(w),
+            "invoice_count": workspace_service.workspace_invoice_count(db, ws),
+            "sample_loaded": bool(w and w.sample_loaded),
+            "has_user_data": bool(w and w.has_user_data),
+        }
+
+    ok, flags = run_db(_read)
+    return flags if ok else {"is_demo": False, "invoice_count": 0, "sample_loaded": False, "has_user_data": False}
+
+
 def show_demo_banner() -> None:
-    st.markdown(f'<div class="demo-banner">🧪 <div>{demo_setup.DEMO_NOTE_HTML}</div></div>',
-                unsafe_allow_html=True)
+    """The "Demo mode" banner, ONLY while the workspace holds nothing but the sample data."""
+    if workspace_flags()["is_demo"]:
+        st.markdown(f'<div class="demo-banner">🧪 <div>{demo_setup.DEMO_NOTE_HTML}</div></div>',
+                    unsafe_allow_html=True)
 
 
 def material_name(icon: Optional[str]) -> str:
@@ -566,7 +590,8 @@ def render_sidebar_brand(pages: list, current=None) -> None:
             """
             + f'<div class="account-box"><div class="account-email">{html.escape(account.get("email", ""))}</div>'
             + f'<div class="account-ws">{html.escape(account.get("workspace_name", ""))}</div></div>'
-            + '<span class="demo-badge">● Demo data</span>',
+            + ('<span class="demo-badge">● Demo data</span>' if workspace_flags()["is_demo"]
+               else '<span class="demo-badge live">● Live workspace</span>'),
             unsafe_allow_html=True,
         )
         for page in pages:
@@ -587,23 +612,40 @@ def render_sidebar_brand(pages: list, current=None) -> None:
 
 
 def render_workspace_tools() -> None:
-    """"Load sample data": copy the sample invoices into the user's own workspace."""
+    """Load / reset sample data and delete the workspace (each with a confirmation step)."""
     from backend.services import workspace_service
 
     ws = workspace_id()
+    email = (current_account() or {}).get("email", "dashboard_user")
+    flags = workspace_flags()
     with st.expander("Workspace tools", icon=":material/folder_managed:"):
-        ok, count = run_db(lambda db: workspace_service.workspace_invoice_count(db, ws))
-        count = count if ok else 0
-        st.caption(f"{count} invoices in this workspace.")
-        confirm = True
-        if count:
-            confirm = st.checkbox("Replace my current data with the sample data", key="confirm_sample_load")
-        if st.button("Load sample data", key="load_sample_button", width="stretch", disabled=not confirm):
-            email = (current_account() or {}).get("email", "dashboard_user")
+        label = "Demo data" if flags["is_demo"] else "Live workspace"
+        st.caption(f"{flags['invoice_count']} invoices · {label}")
+
+        empty = flags["invoice_count"] == 0 and not flags["has_user_data"]
+        if empty:
+            go = st.button("Load sample data", key="load_sample_button", width="stretch")
+        else:
+            sure = st.checkbox("Replace ALL my data with the sample data", key="confirm_sample_reset")
+            go = st.button("Reset to sample data", key="reset_sample_button", width="stretch", disabled=not sure)
+        if go:
             with st.spinner("Copying the sample data into your workspace..."):
                 done, result = run_db(lambda db: workspace_service.load_sample_data(db, ws, who=email))
             if done:
                 st.session_state["flash"] = ("ok", f"Loaded {len(result['invoices'])} sample invoices.")
+                st.rerun()
+            else:
+                st.error(result.get("detail"))
+
+        st.markdown('<div class="danger-note">Delete my workspace</div>', unsafe_allow_html=True)
+        st.caption("Deletes your account and ALL data in this workspace. This cannot be undone.")
+        typed = st.text_input("Type DELETE to confirm", key="confirm_delete_text", label_visibility="collapsed",
+                              placeholder="Type DELETE to confirm")
+        if st.button("Delete my workspace", key="delete_workspace_button", width="stretch",
+                     disabled=typed.strip() != "DELETE"):
+            done, result = run_db(lambda db: workspace_service.delete_workspace(db, ws))
+            if done:
+                logout()
                 st.rerun()
             else:
                 st.error(result.get("detail"))

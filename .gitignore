@@ -35,3 +35,6 @@ Thumbs.db
 
 # Streamlit secrets (may hold GEMINI_API_KEY) - never commit
 .streamlit/secrets.toml
+
+# Users' own uploads and per-workspace contract indexes (Phase 3) - never commit
+data/workspaces/

@@ -58,6 +58,7 @@ PAGES = [
     st.Page("views/investigation.py", title="Investigation", icon=":material/manage_search:"),
     st.Page("views/approvals.py", title="Approvals", icon=":material/task_alt:"),
     st.Page("views/evals.py", title="Evals", icon=":material/insights:"),
+    st.Page("views/data.py", title="My data", icon=":material/upload_file:"),
 ]
 LOGGED_IN = st.session_state.get("auth") is not None
 
@@ -83,7 +84,7 @@ else:
     current = st.navigation(
         [st.Page(_show_login, title="Log in", icon=":material/login:", default=True, url_path="welcome")]
         + [st.Page(_show_login, title="Log in", url_path=path)
-           for path in ("investigation", "approvals", "evals", "login")],
+           for path in ("investigation", "approvals", "evals", "data", "login")],
         position="hidden",
     )
 
