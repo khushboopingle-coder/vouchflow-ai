@@ -17,6 +17,7 @@ if str(DASHBOARD_DIR) not in sys.path:
 import ui_common as ui  # noqa: E402
 
 st.set_page_config(page_title="VouchFlow AI | Approvals", page_icon="✅", layout="wide")
+ui.apply_global_css()  # shared theme (colours from ui_common.PALETTE)
 ui.apply_page_style(
     "✅ Approvals",
     "Invoices the agent has investigated wait here. Only a named person can approve or reject them.",

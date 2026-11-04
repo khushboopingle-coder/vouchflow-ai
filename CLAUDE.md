@@ -38,9 +38,14 @@ against purchase orders (PO), goods received notes (GRN) and supplier contracts
 - `dashboard/app.py` — entry point / router (Streamlit Cloud main file): `st.navigation`
   (hidden) + own sidebar menu via `st.page_link`; Home, Investigation, Approvals, Evals
 - `dashboard/home.py` — Home page: KPI cards, invoice ledger, invoice inspection
-- `.streamlit/config.toml` — light theme (colours = palette in `ui_common.GLOBAL_CSS`)
+- `.streamlit/config.toml` — light theme + DM Sans font; colours must equal `ui_common.PALETTE`
+  (checked by `tests/test_theme.py`)
 - `dashboard/pages/` — `1_Investigation.py`, `2_Approvals.py`, `3_Evals.py` (Evals is read-only)
-- `dashboard/ui_common.py` — shared helpers: API first, falls back to services on local DB; `GLOBAL_CSS`, sidebar brand + "Demo data" badge
+- `dashboard/ui_common.py` — shared helpers: API first, falls back to services on local DB; `PALETTE` (the ONLY place with colours — no hex codes in other dashboard files),
+  `apply_global_css()` (called once at the top of app.py, home.py and each page),
+  sidebar brand/menu, demo banner, status pills, `render_html_table` (invoice ledger).
+  app.py reloads `ui_common`/`demo_setup` when their files change (Streamlit keeps old
+  helper modules in memory otherwise -> "has no attribute" errors after an update)
 - `dashboard/demo_setup.py` — demo start-up (Streamlit Cloud): copies Gemini secrets to env,
   seeds an EMPTY database from `mock_data.json` (invoices 1–50), checks + investigates
   6 demo invoices (extraction only if a key exists). Never runs the generator scripts

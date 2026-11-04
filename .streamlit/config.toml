@@ -1,10 +1,23 @@
 # VouchFlow AI - Streamlit settings (read locally and on Streamlit Community Cloud)
-# Light theme so tables and widgets match the page.
-# Colours are the dashboard palette in dashboard/ui_common.py (GLOBAL_CSS).
+# LIGHT theme so tables and widgets match the page (no black tables).
+# These values must match PALETTE in dashboard/ui_common.py
+# (tests/test_theme.py fails if they drift apart).
 
 [theme]
 base = "light"
-primaryColor = "#557b68"              # --green  (buttons, links, focus)
-backgroundColor = "#f5f4ef"           # --bg     (page)
-secondaryBackgroundColor = "#eeefe8"  # sidebar / widget background
-textColor = "#26372f"                 # --text
+primaryColor = "#8C4B32"                    # PALETTE["primary"]  brown
+backgroundColor = "#F4EEE7"                 # PALETTE["bg"]       warm cream
+secondaryBackgroundColor = "#E9DFD3"        # PALETTE["sidebar"]  chrome-beige
+textColor = "#3A2A22"                       # PALETTE["text"]
+linkColor = "#C0703F"                       # PALETTE["accent"]   orange
+borderColor = "#DCCFC1"                     # PALETTE["card_border"]
+dataframeBorderColor = "#E6DDD3"            # PALETTE["chrome_light"]
+dataframeHeaderBackgroundColor = "#E6DDD3"  # PALETTE["chrome_light"]
+baseRadius = "10px"
+# Rounded modern font, loaded from Google Fonts by Streamlit itself
+font = "DM Sans:https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap, sans-serif"
+headingFont = "DM Sans:https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap, sans-serif"
+
+[theme.sidebar]
+backgroundColor = "#E9DFD3"                 # PALETTE["sidebar"]
+secondaryBackgroundColor = "#FBF8F4"        # PALETTE["card"]

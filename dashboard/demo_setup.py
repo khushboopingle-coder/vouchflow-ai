@@ -38,8 +38,8 @@ SECRET_KEYS = ("GEMINI_API_KEY", "GEMINI_MODEL", "GEMINI_MODEL_LIST")
 FALLBACK_DEMO_IDS = [1, 19, 15, 21, 6, 24]
 DEMO_WHO = "demo_setup"
 
-DEMO_NOTE = (
-    "🧪 **Demo mode: all data is fake.** Suppliers, invoices and contracts are generated "
+DEMO_NOTE_HTML = (
+    "<b>Demo mode: all data is fake.</b> Suppliers, invoices and contracts are generated "
     "test data. The AI only advises — a person always approves."
 )
 
@@ -160,10 +160,6 @@ def ensure_demo_ready() -> Dict:
         except Exception as exc:
             st.error(f"Demo setup failed: {exc}")
             st.stop()
-
-
-def show_demo_note() -> None:
-    st.info(DEMO_NOTE)
 
 
 if __name__ == "__main__":

@@ -19,6 +19,7 @@ if str(DASHBOARD_DIR) not in sys.path:
 import ui_common as ui  # noqa: E402
 
 st.set_page_config(page_title="VouchFlow AI | Evals", page_icon="📊", layout="wide")
+ui.apply_global_css()  # shared theme (colours from ui_common.PALETTE)
 ui.apply_page_style(
     "📊 Evals",
     "How well each part of VouchFlow AI scores against the answer key. Numbers come from the saved result files.",
@@ -121,7 +122,7 @@ for tab, name in zip(tabs[1:4], ["matching_results.csv", "hard_matching_results.
             width="stretch",
         )
         st.markdown("**Mistake types in this set**")
-        st.bar_chart(df["expected_mistake_type"].value_counts())
+        st.bar_chart(df["expected_mistake_type"].value_counts(), color=ui.PALETTE["primary"])
         with st.expander("All rows"):
             st.dataframe(df, width="stretch", hide_index=True)
 

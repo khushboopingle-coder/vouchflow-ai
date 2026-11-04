@@ -2,8 +2,10 @@
 VouchFlow AI — Home (invoice ledger)
 The overview page: KPI cards, searchable invoice ledger and invoice inspection.
 Opened through the router in dashboard/app.py (st.navigation, title "Home").
+All colours come from ui_common.PALETTE (via CSS classes); none are written here.
 """
 
+import html
 import os
 import sys
 from pathlib import Path
@@ -13,8 +15,14 @@ import requests
 import streamlit as st
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-if str(BASE_DIR) not in sys.path:
-    sys.path.insert(0, str(BASE_DIR))
+DASHBOARD_DIR = Path(__file__).resolve().parent
+for _path in (BASE_DIR, DASHBOARD_DIR):
+    if str(_path) not in sys.path:
+        sys.path.insert(0, str(_path))
+
+import ui_common as ui  # noqa: E402
+
+ui.apply_global_css()  # shared theme (colours from ui_common.PALETTE)
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 
@@ -33,7 +41,7 @@ def fetch_health():
 def fetch_invoices(status_filter=None):
     """Fetch invoices from the API, with a local database fallback."""
     try:
-        params = {}
+        params = {"limit": 500}
         if status_filter and status_filter != "All":
             params["status"] = status_filter
         response = requests.get(f"{API_BASE_URL}/invoices", params=params, timeout=3)
@@ -51,7 +59,7 @@ def fetch_invoices(status_filter=None):
         try:
             status_param = status_filter if status_filter != "All" else None
             invoices = invoice_service.list_invoices(
-                db=db, status_filter=status_param
+                db=db, status_filter=status_param, limit=500
             )
             return [invoice.model_dump() for invoice in invoices]
         finally:
@@ -108,29 +116,17 @@ def upload_invoice_file(file_obj):
         return False, {"detail": str(exc)}
 
 
-def money(value):
-    try:
-        return f"₹{float(value or 0):,.2f}"
-    except (TypeError, ValueError):
-        return "—"
+money = ui.money
 
 
-def status_color(status):
-    return {
-        "verified": ("#e3efe6", "#3f6b4c"),
-        "needs_review": ("#f6ecd9", "#8a6430"),
-        "mismatch_detected": ("#f5e2e0", "#8f4a45"),
-        "pending_approval": ("#e6e9f3", "#4f5f86"),
-    }.get(status, ("#ecece6", "#55615a"))
-
-
-def render_metric(label, value, icon, accent, icon_bg, foot):
+def render_metric(label, value, icon, kind, foot):
+    """KPI card. `kind` picks the icon colour: total, verified, needs_review, mismatch_detected."""
     st.markdown(
         f"""
-        <div class="metric-card" style="--accent:{accent};--glow:{accent};--icon-bg:{icon_bg}">
+        <div class="metric-card">
             <div class="metric-top">
                 <div class="metric-label">{label}</div>
-                <div class="metric-icon">{icon}</div>
+                <div class="metric-icon k-{kind}">{icon}</div>
             </div>
             <div class="metric-value">{value}</div>
             <div class="metric-foot">{foot}</div>
@@ -141,7 +137,7 @@ def render_metric(label, value, icon, accent, icon_bg, foot):
 
 
 # ---------------------------------------------------------------------
-# Sidebar
+# Sidebar (brand, badge and page menu are drawn by app.py above this)
 # ---------------------------------------------------------------------
 api_status = fetch_health()
 
@@ -158,13 +154,7 @@ with st.sidebar:
         "Invoice status",
         status_options,
         index=0,
-        format_func=lambda value: {
-            "All": "All invoices",
-            "verified": "Verified",
-            "needs_review": "Needs review",
-            "mismatch_detected": "Mismatch detected",
-            "pending_approval": "Pending approval",
-        }.get(value, value),
+        format_func=lambda value: "All invoices" if value == "All" else ui.status_label(value),
         label_visibility="collapsed",
     )
 
@@ -197,9 +187,9 @@ with st.sidebar:
     st.markdown(
         """
         <div class="muted-note">
-            <b style="color:#2e4337">VouchFlow AI</b><br>
+            <b>VouchFlow AI</b><br>
             Accounts payable · Invoice audit<br><br>
-            <span style="color:#6d9476">●</span> Secure workflow interface
+            ● Secure workflow interface
         </div>
         """,
         unsafe_allow_html=True,
@@ -209,7 +199,7 @@ with st.sidebar:
 # Main workspace header
 # ---------------------------------------------------------------------
 st.markdown(
-    """
+    f"""
     <div class="topline">
         <div>
             <div class="eyebrow">ACCOUNTS PAYABLE / OVERVIEW</div>
@@ -218,7 +208,8 @@ st.markdown(
                 A calmer, clearer view of your invoices and payment checks.
             </div>
         </div>
-        <div class="live-pill"><span class="live-dot"></span> WORKSPACE ONLINE</div>
+        <div class="live-pill"><span class="live-dot"></span>
+            {'WORKSPACE ONLINE' if api_status else 'DEMO WORKSPACE'}</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -241,13 +232,13 @@ st.markdown('<div class="section-kicker">Your invoice portfolio</div>', unsafe_a
 st.write("")
 kpi_cols = st.columns(4, gap="medium")
 with kpi_cols[0]:
-    render_metric("Total invoices", f"{total_count:,}", "▤", "#788da5", "rgba(120,141,165,.12)", "Invoices in your ledger")
+    render_metric("Total invoices", f"{total_count:,}", "▤", "total", "Invoices in your ledger")
 with kpi_cols[1]:
-    render_metric("Verified", f"{verified_count:,}", "✓", "#6d9476", "rgba(109,148,118,.13)", f"{verified_pct}% of all invoices")
+    render_metric("Verified", f"{verified_count:,}", "✓", "verified", f"{verified_pct}% of all invoices")
 with kpi_cols[2]:
-    render_metric("Needs review", f"{needs_review_count:,}", "◷", "#b58a4e", "rgba(181,138,78,.12)", "Require a closer look")
+    render_metric("Needs review", f"{needs_review_count:,}", "◷", "needs_review", "Require a closer look")
 with kpi_cols[3]:
-    render_metric("Mismatches", f"{mismatch_count:,}", "!", "#b96d68", "rgba(185,109,104,.12)", "Exceptions to investigate")
+    render_metric("Mismatches", f"{mismatch_count:,}", "!", "mismatch_detected", "Exceptions to investigate")
 
 st.write("")
 st.markdown("---")
@@ -281,8 +272,7 @@ with ledger_col:
         )
     with count_col:
         st.markdown(
-            f'<div style="text-align:right;color:#7d8980;padding:9px 2px;font-size:.8rem">'
-            f'<b style="color:#2d4034">{len(filtered_invoices)}</b> records</div>',
+            f'<div class="records"><b>{len(filtered_invoices)}</b> records</div>',
             unsafe_allow_html=True,
         )
 
@@ -298,35 +288,23 @@ with ledger_col:
     if not filtered_invoices:
         st.info("No invoices match the current filter. Try another status or search term.")
     else:
-        table_data = []
-        for inv in filtered_invoices:
-            status = inv.get("status", "unknown")
-            table_data.append(
+        ui.render_html_table(
+            [
                 {
                     "ID": inv.get("id"),
                     "Invoice number": inv.get("invoice_number", "—"),
                     "Supplier": inv.get("supplier_name", "—"),
+                    # status and total first, so they are visible without scrolling sideways
+                    "Status": inv.get("status", "unknown"),
+                    "Grand total": money(inv.get("grand_total")),
                     "PO reference": inv.get("po_number") or "—",
                     "Invoice date": inv.get("invoice_date", "—"),
-                    "Grand total": money(inv.get("grand_total")),
-                    "Status": status.replace("_", " ").title(),
                     "File": Path(str(inv.get("file_path", ""))).name or "—",
                 }
-            )
-
-        df = pd.DataFrame(table_data)
-
-        def style_status(value):
-            key = value.lower().replace(" ", "_")
-            bg, fg = status_color(key)
-            return f"background-color:{bg};color:{fg};font-weight:700;border-radius:5px;"
-
-        styled_df = df.style.map(style_status, subset=["Status"])
-        st.dataframe(
-            styled_df,
-            width="stretch",
-            hide_index=True,
-            height=430,
+                for inv in filtered_invoices
+            ],
+            status_column="Status",
+            numeric_columns=("ID", "Grand total"),
         )
 
 with insight_col:
@@ -340,25 +318,21 @@ with insight_col:
     st.write("")
     st.markdown(
         f"""
-        <div class="surface" style="padding:17px;margin-bottom:12px">
-            <div style="color:#7d8980;font-size:.77rem">Clean invoices</div>
-            <div style="font:800 1.8rem Manrope;color:#557b68;margin:5px 0">{verified_pct}%</div>
-            <div style="height:7px;background:#e3e8df;border-radius:20px;overflow:hidden">
-                <div style="height:100%;width:{verified_pct}%;background:linear-gradient(90deg,#6d9476,#9ec2a5);border-radius:20px"></div>
-            </div>
+        <div class="surface" style="margin-bottom:12px">
+            <div class="chrome-head">Clean invoices</div>
+            <div class="big-number amount total">{verified_pct}%</div>
+            <div class="progress-track"><div class="progress-fill" style="width:{verified_pct}%"></div></div>
             <div class="muted-note" style="margin-top:9px">Verified share of total invoices</div>
         </div>
-        <div class="surface" style="padding:17px;margin-bottom:12px">
-            <div style="color:#7d8980;font-size:.77rem">Attention required</div>
-            <div style="font:800 1.8rem Manrope;color:#b58a4e;margin:5px 0">{needs_review_count + mismatch_count:,}</div>
+        <div class="surface" style="margin-bottom:12px">
+            <div class="chrome-head">Attention required</div>
+            <div class="big-number amount">{needs_review_count + mismatch_count:,}</div>
             <div class="muted-note">Review and mismatch cases</div>
         </div>
-        <div class="surface" style="padding:17px">
-            <div style="color:#7d8980;font-size:.77rem">Workflow status</div>
-            <div style="color:{'#557b68' if api_status else '#b58a4e'};font-weight:800;margin-top:7px">
-                {'● API connected' if api_status else '● Demo data (standalone)'}
-            </div>
-            <div class="muted-note" style="margin-top:5px">Backend service connection</div>
+        <div class="surface">
+            <div class="chrome-head">Workflow status</div>
+            <div style="margin-top:4px">{'<span class="vf-pill vf-verified">API connected</span>' if api_status else '<span class="vf-pill vf-other">Demo data (standalone)</span>'}</div>
+            <div class="muted-note" style="margin-top:8px">Backend service connection</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -408,23 +382,16 @@ if all_invoices:
                 st.write(details.get("invoice_date") or "—")
             with info4:
                 st.markdown("**Status**")
-                status = details.get("status", "unknown")
-                bg, fg = status_color(status)
-                st.markdown(
-                    f'<span style="display:inline-block;padding:6px 10px;border-radius:7px;'
-                    f'background:{bg};color:{fg};font-weight:700;font-size:.82rem">'
-                    f'{status.replace("_", " ").title()}</span>',
-                    unsafe_allow_html=True,
-                )
+                st.markdown(ui.status_pill(details.get("status", "unknown")), unsafe_allow_html=True)
 
             st.write("")
             amount1, amount2 = st.columns(2)
             with amount1:
                 st.markdown("**Subtotal**")
-                st.markdown(f"<h3>{money(details.get('subtotal'))}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 class='amount'>{html.escape(money(details.get('subtotal')))}</h3>", unsafe_allow_html=True)
             with amount2:
                 st.markdown("**Grand total**")
-                st.markdown(f"<h3 style='color:#557b68'>{money(details.get('grand_total'))}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 class='amount total'>{html.escape(money(details.get('grand_total')))}</h3>", unsafe_allow_html=True)
 
             items = details.get("items", [])
             st.markdown("**Extracted line items**")
@@ -449,10 +416,6 @@ else:
     st.info("Your invoice ledger is empty. Upload a PDF or image from the left panel to get started.")
 
 st.markdown(
-    """
-    <div style="text-align:center;color:#8a958b;font-size:.74rem;padding-top:2rem">
-        VouchFlow AI · Intelligent accounts payable · Built for clarity and control
-    </div>
-    """,
+    '<div class="footer-note">VouchFlow AI · Intelligent accounts payable · Built for clarity and control</div>',
     unsafe_allow_html=True,
 )

@@ -12,6 +12,7 @@ It sets up the page, runs the one-time demo start-up, draws the shared sidebar
     Evals          -> dashboard/pages/3_Evals.py
 """
 
+import importlib
 import sys
 from pathlib import Path
 
@@ -30,12 +31,26 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-import demo_setup  # noqa: E402
-import ui_common as ui  # noqa: E402
 
+def _fresh_module(name: str):
+    """Import a helper module, reloading it if its file changed since it was loaded.
+    Streamlit only reloads the page scripts, not helper modules, so after an update
+    (e.g. a new push on Streamlit Cloud) the server could keep an OLD ui_common in
+    memory and fail with "has no attribute ...". This prevents that."""
+    module = importlib.import_module(name)
+    mtime = Path(module.__file__).stat().st_mtime
+    if getattr(module, "_vf_loaded_mtime", None) != mtime:
+        module = importlib.reload(module)
+        module._vf_loaded_mtime = mtime
+    return module
+
+
+demo_setup = _fresh_module("demo_setup")
+ui = _fresh_module("ui_common")
+
+ui.apply_global_css()
 # Demo start-up: works without API / .env / Gemini key (seeds an empty database once)
 demo_setup.ensure_demo_ready()
-ui.apply_global_css()
 
 PAGES = [
     st.Page("home.py", title="Home", icon="🏠", default=True),
@@ -45,6 +60,6 @@ PAGES = [
 ]
 current = st.navigation(PAGES, position="hidden")  # menu is drawn below the brand instead
 
-ui.render_sidebar_brand(PAGES)
-demo_setup.show_demo_note()
+ui.render_sidebar_brand(PAGES, current)
+ui.show_demo_banner()
 current.run()
