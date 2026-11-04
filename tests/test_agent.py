@@ -203,7 +203,7 @@ def test_investigation_audit_logs_per_step(db_session):
 # =============================================================================
 # 3. Tests for API Service Endpoints
 # =============================================================================
-def test_service_investigate_and_get(db_session):
+def test_service_investigate_and_get(db_session, sample_ws_id):
     """
     Verifies service functions:
     1. investigate_invoice persists to invoice_investigations table
@@ -211,12 +211,12 @@ def test_service_investigate_and_get(db_session):
     3. Non-existent invoice raises 404
     """
     # 1. Investigate invoice 1
-    report = service_investigate_invoice(db_session, invoice_id=1, who="api_tester")
+    report = service_investigate_invoice(db_session, invoice_id=1, workspace_id=sample_ws_id, who="api_tester")
     assert report.invoice_id == 1
     assert report.status == "verified"
 
     # 2. Retrieve saved report
-    retrieved = service_get_invoice_investigation(db_session, invoice_id=1)
+    retrieved = service_get_invoice_investigation(db_session, invoice_id=1, workspace_id=sample_ws_id)
     assert retrieved.invoice_id == 1
     assert retrieved.status == report.status
     assert retrieved.recommended_next_action == report.recommended_next_action
@@ -224,7 +224,7 @@ def test_service_investigate_and_get(db_session):
 
     # 3. Non-existent invoice ID raises HTTPException 404
     with pytest.raises(HTTPException) as exc_info:
-        service_get_invoice_investigation(db_session, invoice_id=999999)
+        service_get_invoice_investigation(db_session, invoice_id=999999, workspace_id=sample_ws_id)
     assert exc_info.value.status_code == 404
 
 

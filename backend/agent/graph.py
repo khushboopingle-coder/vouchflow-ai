@@ -23,6 +23,7 @@ import hashlib
 import json
 import os
 import time
+from contextvars import ContextVar
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -44,7 +45,7 @@ from backend.agent.tools import (
     search_contract,
 )
 from backend.config import settings
-from backend.database.models import AuditLog
+from backend.database.models import AuditLog, Invoice
 from backend.guardrails.grounding import ground_check_explanation
 from backend.guardrails.injection import scan_for_injection
 from backend.guardrails.permissions import check_permission
@@ -69,6 +70,11 @@ _QUOTA_SKIP_SECONDS = 600       # skip a model for 10 minutes after a quota erro
 _NOT_FOUND_SKIP_SECONDS = 86400  # skip a missing model for 24 hours
 
 
+# Workspace of the invoice being investigated (set by run_investigation), so every audit
+# row the agent writes belongs to that workspace. A ContextVar keeps parallel runs apart.
+_AUDIT_WORKSPACE: ContextVar[Optional[int]] = ContextVar("vouchflow_audit_workspace", default=None)
+
+
 def log_audit_step(db: Optional[Session], who: str, action: str, details: str) -> None:
     """Record one audit log entry. Never crashes the workflow."""
     if db is None:
@@ -79,6 +85,7 @@ def log_audit_step(db: Optional[Session], who: str, action: str, details: str) -
             action=action,
             details=details,
             time=datetime.utcnow(),
+            workspace_id=_AUDIT_WORKSPACE.get(),
         )
         db.add(entry)
         db.commit()
@@ -1016,7 +1023,14 @@ def run_investigation(
         "llm_used": False,
     }
 
-    final_state = investigation_app.invoke(initial_state)
+    workspace_id = None
+    if db is not None:
+        workspace_id = db.query(Invoice.workspace_id).filter(Invoice.id == invoice_id).scalar()
+    token = _AUDIT_WORKSPACE.set(workspace_id)
+    try:
+        final_state = investigation_app.invoke(initial_state)
+    finally:
+        _AUDIT_WORKSPACE.reset(token)
     report_dict = final_state.get("report")
     if not report_dict:
         raise RuntimeError(f"Investigation failed to generate report for invoice ID {invoice_id}")

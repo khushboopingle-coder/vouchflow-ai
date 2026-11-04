@@ -11,6 +11,8 @@ Safety rules (enforced here, so the API, dashboard and n8n all follow them):
    'ready_for_human_approval' (the human is overriding the agent's advice).
 5. Each investigation report can be decided only once. Re-investigate to decide again.
 6. Every decision is written to audit_logs.
+7. Workspaces (Phase 2): a person can only decide on invoices of their own workspace;
+   the queue and the history only show their own workspace.
 
 The original invoices.status column is NOT changed by a decision.
 """
@@ -24,6 +26,7 @@ from sqlalchemy.orm import Session
 
 from backend.database.models import AuditLog, Invoice, InvoiceDecision, InvoiceInvestigation
 from backend.database.schemas import ApprovalQueueItem, DecisionCreate, DecisionRead
+from backend.services import workspace_service
 
 # Names that belong to software, not people. Checked case-insensitively.
 BLOCKED_DECIDER_NAMES = {
@@ -74,7 +77,7 @@ def _to_read(decision: InvoiceDecision, invoice_number: str = None) -> DecisionR
     )
 
 
-def record_decision(db: Session, invoice_id: int, payload: DecisionCreate) -> DecisionRead:
+def record_decision(db: Session, invoice_id: int, payload: DecisionCreate, workspace_id: int) -> DecisionRead:
     """Validates and saves a human decision, then writes an audit log."""
     decided_by = payload.decided_by.strip()
     note = (payload.note or "").strip()
@@ -85,6 +88,7 @@ def record_decision(db: Session, invoice_id: int, payload: DecisionCreate) -> De
     if _is_blocked_name(decided_by):
         db.add(AuditLog(
             who=decided_by,
+            workspace_id=workspace_id,
             action="decision_blocked_non_human",
             details=json.dumps({"invoice_id": invoice_id, "decision": payload.decision}),
         ))
@@ -94,9 +98,7 @@ def record_decision(db: Session, invoice_id: int, payload: DecisionCreate) -> De
             f"'{decided_by}' looks like a software account. Only a named finance person may approve or reject invoices.",
         )
 
-    invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
-    if not invoice:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Invoice with ID {invoice_id} not found.")
+    invoice = workspace_service.require_invoice(db, invoice_id, workspace_id)  # 404 if not ours
 
     # Rule 2: must be investigated first
     investigation = _latest_investigation(db, invoice_id)
@@ -144,12 +146,14 @@ def record_decision(db: Session, invoice_id: int, payload: DecisionCreate) -> De
         note=note or None,
         agent_recommendation=agent_recommendation,
         created_at=datetime.utcnow(),
+        workspace_id=workspace_id,
     )
     db.add(decision)
 
     # Rule 6: audit trail
     db.add(AuditLog(
         who=decided_by,
+        workspace_id=workspace_id,
         action=f"human_decision_{payload.decision}",
         details=json.dumps({
             "invoice_id": invoice_id,
@@ -164,10 +168,12 @@ def record_decision(db: Session, invoice_id: int, payload: DecisionCreate) -> De
     return _to_read(decision, invoice.invoice_number)
 
 
-def get_approval_queue(db: Session) -> List[ApprovalQueueItem]:
-    """Invoices whose latest investigation report has no human decision yet."""
+def get_approval_queue(db: Session, workspace_id: int) -> List[ApprovalQueueItem]:
+    """Invoices of this workspace whose latest investigation report has no human decision yet."""
     investigations = (
         db.query(InvoiceInvestigation)
+        .join(Invoice, Invoice.id == InvoiceInvestigation.invoice_id)
+        .filter(Invoice.workspace_id == workspace_id)
         .order_by(InvoiceInvestigation.created_at.desc(), InvoiceInvestigation.id.desc())
         .all()
     )
@@ -199,11 +205,12 @@ def get_approval_queue(db: Session) -> List[ApprovalQueueItem]:
     return queue
 
 
-def list_decisions(db: Session, limit: int = 50) -> List[DecisionRead]:
-    """Most recent human decisions, newest first."""
+def list_decisions(db: Session, workspace_id: int, limit: int = 50) -> List[DecisionRead]:
+    """Most recent human decisions of this workspace, newest first."""
     rows = (
         db.query(InvoiceDecision, Invoice.invoice_number)
         .join(Invoice, Invoice.id == InvoiceDecision.invoice_id)
+        .filter(Invoice.workspace_id == workspace_id)
         .order_by(InvoiceDecision.created_at.desc(), InvoiceDecision.id.desc())
         .limit(limit)
         .all()

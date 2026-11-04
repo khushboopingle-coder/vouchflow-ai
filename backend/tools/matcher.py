@@ -223,7 +223,11 @@ def perform_three_way_match(
 
     # In AP accounting, an invoice is a duplicate if an earlier invoice was already submitted
     # with the same number from the SAME supplier (or billing the same PO), identical supplier+date+amount, or identical file hash.
-    all_earlier_invoices = db.query(Invoice).filter(Invoice.id < invoice_id).all()
+    # Workspaces (Phase 2): only invoices of the SAME workspace can be duplicates of each other.
+    earlier_query = db.query(Invoice).filter(Invoice.id < invoice_id)
+    if invoice.workspace_id is not None:
+        earlier_query = earlier_query.filter(Invoice.workspace_id == invoice.workspace_id)
+    all_earlier_invoices = earlier_query.all()
 
     for other in all_earlier_invoices:
         norm_other_num = normalize_inv_num(other.invoice_number)
@@ -298,7 +302,10 @@ def perform_three_way_match(
     po_record: Optional[PurchaseOrder] = None
 
     if extracted_po_ref:
-        po_record = db.query(PurchaseOrder).filter(PurchaseOrder.po_number == extracted_po_ref).first()
+        po_query = db.query(PurchaseOrder).filter(PurchaseOrder.po_number == extracted_po_ref)
+        if invoice.workspace_id is not None:  # a PO number is only looked up in the same workspace
+            po_query = po_query.filter(PurchaseOrder.workspace_id == invoice.workspace_id)
+        po_record = po_query.first()
 
     if not po_record and invoice.po_id:
         po_record = db.query(PurchaseOrder).filter(PurchaseOrder.id == invoice.po_id).first()

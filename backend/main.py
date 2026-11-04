@@ -1,32 +1,43 @@
 """
 VouchFlow AI - FastAPI Backend API
 ==================================
-Endpoints:
-- GET /health                    : Health check endpoint
-- GET /invoices                  : Lists all invoices with statuses and supplier details
-- GET /invoices/{id}             : Retrieves a single invoice with its line items
-- POST /invoices/upload          : Uploads invoice PDF/image, creates record ('needs_review') & audit log
-- POST /invoices/{id}/extract    : Runs AI/OCR extraction and saves to invoice_extractions
-- GET /invoices/{id}/extraction  : Returns the saved extraction record
-- GET /audit-logs                : Lists recent audit log records
-- POST /invoices/{id}/investigate: Runs the Investigation Agent
-- GET /invoices/{id}/investigation: Latest Investigation Agent report
-- POST /invoices/{id}/decision   : HUMAN approve / reject (Phase 8)
-- GET /approvals/queue           : Investigated invoices waiting for a human decision
-- GET /approvals/decisions       : Recent human decisions
+Open:
+- GET  /health                      : Health check
+- POST /auth/signup                 : New account + private workspace (+ sample data)
+- POST /auth/login                  : Email + password -> Bearer token
+
+Needs "Authorization: Bearer <token>" and only ever shows the caller's own workspace
+(Phase 2). Another workspace's invoice answers 404, exactly like a missing one:
+- GET  /auth/me                     : Who am I, which workspace
+- GET  /invoices                    : Lists the workspace's invoices
+- GET  /invoices/{id}               : One invoice with its line items
+- POST /invoices/upload             : Upload invoice PDF/image ('needs_review') + audit log
+- POST /invoices/{id}/extract       : AI/OCR extraction -> invoice_extractions
+- GET  /invoices/{id}/extraction    : Saved extraction
+- POST /invoices/{id}/check         : 3-way matching check
+- GET  /invoices/{id}/check         : Saved check
+- GET  /audit-logs                  : Recent audit log records of the workspace
+- POST /invoices/{id}/investigate   : Run the Investigation Agent
+- GET  /invoices/{id}/investigation : Latest Investigation Agent report
+- POST /invoices/{id}/decision      : HUMAN approve / reject
+- GET  /approvals/queue             : Investigated invoices waiting for a human decision
+- GET  /approvals/decisions         : Recent human decisions
 """
 
-from typing import List, Optional
+from typing import List
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, UploadFile, File, Query
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
+from backend.auth.dependencies import current_account
+from backend.auth.tokens import create_token
 from backend.database.db import get_db, init_db
 from backend.database import schemas
 from backend.database.models import AuditLog
 from backend.agent.state import InvestigationReport
-from backend.services import invoice_service, approval_service
+from backend.services import invoice_service, approval_service, auth_service
+from backend.services.auth_service import Account, AuthError
 
 
 @asynccontextmanager
@@ -38,8 +49,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="VouchFlow AI API",
-    description="Intelligent Accounts Payable & 3-Way Matching Foundation API",
-    version="1.1.0",
+    description="Intelligent Accounts Payable & 3-Way Matching API with private workspaces",
+    version="1.2.0",
     lifespan=lifespan
 )
 
@@ -64,28 +75,68 @@ def health_check():
     return {"status": "ok"}
 
 
+# ---------------------------------------------------------------------
+# Accounts (Phase 2)
+# ---------------------------------------------------------------------
+def _token_response(account: Account) -> schemas.TokenResponse:
+    return schemas.TokenResponse(
+        access_token=create_token(account.user_id, account.workspace_id),
+        email=account.email,
+        workspace_id=account.workspace_id,
+        workspace_name=account.workspace_name,
+    )
+
+
+@app.post("/auth/signup", response_model=schemas.TokenResponse, summary="Create an account", tags=["Auth"])
+def signup(payload: schemas.SignupRequest, db: Session = Depends(get_db)):
+    """Creates a user and their private workspace (with a copy of the sample data by default)."""
+    try:
+        account = auth_service.signup(db, payload.email, payload.password, load_sample=payload.load_sample)
+    except AuthError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
+    return _token_response(account)
+
+
+@app.post("/auth/login", response_model=schemas.TokenResponse, summary="Log in", tags=["Auth"])
+def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
+    """Email + password -> Bearer token (valid 12 hours). Wrong details -> 401."""
+    account = auth_service.login(db, payload.email, payload.password)
+    if account is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Wrong email or password.")
+    return _token_response(account)
+
+
+@app.get("/auth/me", response_model=schemas.AccountRead, summary="Current account", tags=["Auth"])
+def me(account: Account = Depends(current_account)):
+    return schemas.AccountRead(email=account.email, workspace_id=account.workspace_id,
+                               workspace_name=account.workspace_name)
+
+
+# ---------------------------------------------------------------------
+# Invoices (all scoped to the caller's workspace)
+# ---------------------------------------------------------------------
 @app.get(
     "/invoices",
     response_model=List[schemas.InvoiceRead],
-    summary="List all invoices",
+    summary="List the workspace's invoices",
     tags=["Invoices"]
 )
 def list_invoices(
-    status: Optional[str] = Query(
+    status_filter: str = Query(
         None,
+        alias="status",
         description="Filter by invoice status: verified, needs_review, mismatch_detected, pending_approval"
     ),
     skip: int = Query(0, ge=0, description="Offset for pagination"),
     limit: int = Query(100, ge=1, le=500, description="Number of invoices to return"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    account: Account = Depends(current_account),
 ):
-    """
-    Returns a list of all invoices with supplier name, PO number,
-    totals, and verification status.
-    """
+    """Returns the invoices of the caller's workspace with supplier name, PO number and status."""
     return invoice_service.list_invoices(
         db=db,
-        status_filter=status,
+        workspace_id=account.workspace_id,
+        status_filter=status_filter,
         skip=skip,
         limit=limit
     )
@@ -97,15 +148,9 @@ def list_invoices(
     summary="Get single invoice details",
     tags=["Invoices"]
 )
-def get_invoice(
-    invoice_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Returns full details of an invoice including line items,
-    vendor information, and linked purchase order.
-    """
-    return invoice_service.get_invoice_by_id(db=db, invoice_id=invoice_id)
+def get_invoice(invoice_id: int, db: Session = Depends(get_db), account: Account = Depends(current_account)):
+    """Full details of one invoice of the caller's workspace (404 otherwise)."""
+    return invoice_service.get_invoice_by_id(db=db, invoice_id=invoice_id, workspace_id=account.workspace_id)
 
 
 @app.post(
@@ -116,14 +161,14 @@ def get_invoice(
 )
 def upload_invoice(
     file: UploadFile = File(..., description="Invoice document (PDF, PNG, JPG)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    account: Account = Depends(current_account),
 ):
-    """
-    Receives an uploaded invoice file, saves it to data/invoices/,
-    creates a new invoice entry with status 'needs_review',
-    and logs an audit entry.
-    """
-    return invoice_service.save_uploaded_invoice(db=db, file=file, who="portal_user")
+    """Saves the file to data/invoices/, creates an invoice ('needs_review') in the caller's
+    workspace, and logs an audit entry."""
+    return invoice_service.save_uploaded_invoice(
+        db=db, file=file, workspace_id=account.workspace_id, who=account.email
+    )
 
 
 @app.post(
@@ -132,16 +177,11 @@ def upload_invoice(
     summary="Extract structured data from an invoice document using AI/OCR",
     tags=["Extraction"]
 )
-def extract_invoice(
-    invoice_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Runs the Invoice Reader (pdfplumber + Gemini AI) on the invoice file.
-    Saves the extracted JSON in the invoice_extractions table and writes an audit log.
-    NOTE: Invoice status is NOT modified.
-    """
-    return invoice_service.extract_invoice_data(db=db, invoice_id=invoice_id, who="api_user")
+def extract_invoice(invoice_id: int, db: Session = Depends(get_db), account: Account = Depends(current_account)):
+    """Runs the Invoice Reader (pdfplumber + Gemini). Invoice status is NOT modified."""
+    return invoice_service.extract_invoice_data(
+        db=db, invoice_id=invoice_id, workspace_id=account.workspace_id, who=account.email
+    )
 
 
 @app.get(
@@ -150,14 +190,9 @@ def extract_invoice(
     summary="Get saved extraction for an invoice",
     tags=["Extraction"]
 )
-def get_extraction(
-    invoice_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Retrieves the most recent extraction record for an invoice.
-    """
-    return invoice_service.get_invoice_extraction(db=db, invoice_id=invoice_id)
+def get_extraction(invoice_id: int, db: Session = Depends(get_db), account: Account = Depends(current_account)):
+    """The most recent extraction record for an invoice of the caller's workspace."""
+    return invoice_service.get_invoice_extraction(db=db, invoice_id=invoice_id, workspace_id=account.workspace_id)
 
 
 @app.post(
@@ -166,17 +201,11 @@ def get_extraction(
     summary="Run 3-way matching check on an invoice",
     tags=["Matching"]
 )
-def check_invoice(
-    invoice_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Executes automated 3-way matching comparing the invoice with PO, GRN, and Contract.
-    Flags price, quantity, totals, duplicate, and missing PO discrepancies.
-    Persists result in invoice_checks table and writes an audit log.
-    NOTE: Invoice status is NOT modified.
-    """
-    return invoice_service.check_invoice_matching(db=db, invoice_id=invoice_id, who="api_user")
+def check_invoice(invoice_id: int, db: Session = Depends(get_db), account: Account = Depends(current_account)):
+    """3-way matching (Invoice vs PO vs GRN vs Contract). Invoice status is NOT modified."""
+    return invoice_service.check_invoice_matching(
+        db=db, invoice_id=invoice_id, workspace_id=account.workspace_id, who=account.email
+    )
 
 
 @app.get(
@@ -185,28 +214,30 @@ def check_invoice(
     summary="Get saved 3-way matching check for an invoice",
     tags=["Matching"]
 )
-def get_invoice_check(
-    invoice_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Retrieves the most recent 3-way matching check result for an invoice.
-    """
-    return invoice_service.get_invoice_check(db=db, invoice_id=invoice_id)
+def get_invoice_check(invoice_id: int, db: Session = Depends(get_db), account: Account = Depends(current_account)):
+    """The most recent 3-way matching check result."""
+    return invoice_service.get_invoice_check(db=db, invoice_id=invoice_id, workspace_id=account.workspace_id)
 
 
 @app.get(
     "/audit-logs",
     response_model=List[schemas.AuditLogRead],
-    summary="List recent audit log entries",
+    summary="List recent audit log entries of the workspace",
     tags=["Audit"]
 )
 def list_audit_logs(
     limit: int = Query(50, ge=1, le=200),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    account: Account = Depends(current_account),
 ):
-    """Returns recent system audit log events."""
-    return db.query(AuditLog).order_by(AuditLog.time.desc()).limit(limit).all()
+    """Recent audit log events of the caller's workspace."""
+    return (
+        db.query(AuditLog)
+        .filter(AuditLog.workspace_id == account.workspace_id)
+        .order_by(AuditLog.time.desc())
+        .limit(limit)
+        .all()
+    )
 
 
 @app.post(
@@ -215,22 +246,12 @@ def list_audit_logs(
     summary="Run Investigation Agent workflow on an invoice",
     tags=["Investigation"]
 )
-def investigate_invoice_endpoint(
-    invoice_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Executes the Investigation Agent workflow (LangGraph) for an invoice:
-    - Loads invoice & extraction
-    - Executes 3-way matcher
-    - Retrieves PO limits and warehouse physical GRN receipts
-    - Searches master contracts for clauses behind each finding
-    - Formulates auditable evidence list comparing values and sources
-    - Writes deterministic template explanation and recommended action
-    - Logs each step to audit_logs
-    NOTE: The agent never decides to approve or pay. Invoice status is NOT modified.
-    """
-    return invoice_service.investigate_invoice(db=db, invoice_id=invoice_id, who="api_user")
+def investigate_invoice_endpoint(invoice_id: int, db: Session = Depends(get_db),
+                                 account: Account = Depends(current_account)):
+    """Runs the Investigation Agent (LangGraph). The agent never approves or pays."""
+    return invoice_service.investigate_invoice(
+        db=db, invoice_id=invoice_id, workspace_id=account.workspace_id, who=account.email
+    )
 
 
 @app.get(
@@ -239,18 +260,16 @@ def investigate_invoice_endpoint(
     summary="Get saved Investigation Agent report for an invoice",
     tags=["Investigation"]
 )
-def get_invoice_investigation_endpoint(
-    invoice_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Retrieves the most recent Investigation Agent report for an invoice.
-    """
-    return invoice_service.get_invoice_investigation(db=db, invoice_id=invoice_id)
+def get_invoice_investigation_endpoint(invoice_id: int, db: Session = Depends(get_db),
+                                       account: Account = Depends(current_account)):
+    """The most recent Investigation Agent report for an invoice of the caller's workspace."""
+    return invoice_service.get_invoice_investigation(
+        db=db, invoice_id=invoice_id, workspace_id=account.workspace_id
+    )
 
 
 # ---------------------------------------------------------------------
-# Phase 8: Human approvals
+# Human approvals (scoped to the caller's workspace)
 # ---------------------------------------------------------------------
 @app.post(
     "/invoices/{invoice_id}/decision",
@@ -261,15 +280,15 @@ def get_invoice_investigation_endpoint(
 def record_decision_endpoint(
     invoice_id: int,
     payload: schemas.DecisionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    account: Account = Depends(current_account),
 ):
-    """
-    Saves a finance person's decision on the latest investigation of an invoice.
-    Refuses software names (agent, system, n8n...), requires an investigation first,
-    and requires a note for rejections or when overriding the agent's advice.
-    Writes an audit log. Invoice status is NOT modified.
-    """
-    return approval_service.record_decision(db=db, invoice_id=invoice_id, payload=payload)
+    """Saves a finance person's decision on the latest investigation of an invoice of the
+    caller's workspace. Refuses software names, requires an investigation first, and
+    requires a note for rejections or when overriding the agent's advice."""
+    return approval_service.record_decision(
+        db=db, invoice_id=invoice_id, payload=payload, workspace_id=account.workspace_id
+    )
 
 
 @app.get(
@@ -278,9 +297,9 @@ def record_decision_endpoint(
     summary="Invoices waiting for a human decision",
     tags=["Approvals"]
 )
-def approval_queue_endpoint(db: Session = Depends(get_db)):
-    """Lists invoices whose latest investigation has not been decided yet (oldest first)."""
-    return approval_service.get_approval_queue(db=db)
+def approval_queue_endpoint(db: Session = Depends(get_db), account: Account = Depends(current_account)):
+    """Invoices of the caller's workspace whose latest investigation is not decided yet."""
+    return approval_service.get_approval_queue(db=db, workspace_id=account.workspace_id)
 
 
 @app.get(
@@ -291,7 +310,8 @@ def approval_queue_endpoint(db: Session = Depends(get_db)):
 )
 def list_decisions_endpoint(
     limit: int = Query(50, ge=1, le=200),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    account: Account = Depends(current_account),
 ):
-    """Returns recent approve / reject decisions, newest first."""
-    return approval_service.list_decisions(db=db, limit=limit)
+    """Recent approve / reject decisions of the caller's workspace, newest first."""
+    return approval_service.list_decisions(db=db, workspace_id=account.workspace_id, limit=limit)

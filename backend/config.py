@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-3.5-flash-lite"
     GEMINI_MODEL_LIST: str = ""
 
+    # Signs login tokens for the API (Phase 2). Set a long random value in production.
+    # Empty -> a random key per process is used (tokens stop working after a restart).
+    VOUCHFLOW_SECRET_KEY: str = ""
+
     # 3-Way Matching Tolerance Settings
     # Differences up to this amount (in Rupees) are accepted as valid commercial rounding
     ROUNDING_TOLERANCE_RS: float = 1.00

@@ -5,11 +5,13 @@ Shared helpers for the VouchFlow AI dashboard.
   keep .streamlit/config.toml in step — tests/test_theme.py checks that).
 - apply_global_css(): the shared look, built from PALETTE. Called once at the top
   of app.py and of every page.
-- Backend access: talks to the FastAPI backend first; if it is offline, calls the
-  same service functions directly on the local database (same rules, same audit logs).
+- Login session (Phase 2): current_account(), require_login(), logout().
+- Data access: run_db() calls the services directly, always with the logged-in user's
+  workspace_id (same rules and audit logs as the API, which needs a login token).
 - Small formatting helpers, status pills, demo banner, sidebar brand, HTML table.
 """
 
+import dataclasses
 import html
 import json
 import os
@@ -88,18 +90,54 @@ def tint(hex_color: str, alpha: float) -> str:
 
 
 # ---------------------------------------------------------------------
-# Backend access
+# Login session (Phase 2)
 # ---------------------------------------------------------------------
-@st.cache_data(ttl=10, show_spinner=False)
-def backend_online() -> bool:
-    """True if the API answers. Remembered for 10 seconds so pages stay fast."""
-    try:
-        return requests.get(f"{API_BASE_URL}/health", timeout=1.5).status_code == 200
-    except requests.exceptions.RequestException:
-        return False
+AUTH_KEY = "auth"
 
 
+def current_account() -> Optional[Dict[str, Any]]:
+    """The logged-in account {user_id, email, workspace_id, workspace_name}, or None."""
+    return st.session_state.get(AUTH_KEY)
+
+
+def set_account(account) -> None:
+    """Store a backend.services.auth_service.Account in this browser session."""
+    st.session_state[AUTH_KEY] = {
+        "user_id": account.user_id,
+        "email": account.email,
+        "workspace_id": account.workspace_id,
+        "workspace_name": account.workspace_name,
+    }
+
+
+def logout() -> None:
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+
+
+def workspace_id() -> int:
+    account = current_account()
+    if not account:
+        raise RuntimeError("Not logged in.")
+    return int(account["workspace_id"])
+
+
+def require_login() -> Dict[str, Any]:
+    """Stops the page (with a friendly note) when nobody is logged in."""
+    account = current_account()
+    if not account:
+        st.info("Please log in to see your workspace.")
+        st.stop()
+    return account
+
+
+# ---------------------------------------------------------------------
+# Data access: the dashboard calls the services directly, ALWAYS with the
+# logged-in user's workspace_id, so it can only ever see that workspace.
+# ---------------------------------------------------------------------
 def _to_jsonable(value: Any) -> Any:
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        return dataclasses.asdict(value)
     if hasattr(value, "model_dump"):
         return value.model_dump(mode="json")
     if isinstance(value, list):
@@ -107,8 +145,8 @@ def _to_jsonable(value: Any) -> Any:
     return value
 
 
-def _run_local(fallback: Callable) -> Tuple[bool, Any]:
-    """Runs a service function on the local database when the API is offline."""
+def run_db(fn: Callable) -> Tuple[bool, Any]:
+    """Runs fn(db) and returns (ok, data). Errors become {"detail": "..."} instead of a crash."""
     from fastapi import HTTPException
 
     from backend.database.db import SessionLocal, init_db
@@ -116,58 +154,20 @@ def _run_local(fallback: Callable) -> Tuple[bool, Any]:
     init_db()
     db = SessionLocal()
     try:
-        return True, _to_jsonable(fallback(db))
+        return True, _to_jsonable(fn(db))
     except HTTPException as exc:
         return False, {"detail": exc.detail}
-    except Exception as exc:  # show the error instead of crashing the page
-        return False, {"detail": str(exc)}
+    except Exception as exc:  # show the error type instead of crashing the page
+        return False, {"detail": f"{type(exc).__name__}: {exc}"}
     finally:
         db.close()
-
-
-def api_call(
-    method: str,
-    path: str,
-    fallback: Optional[Callable] = None,
-    json_body: Optional[dict] = None,
-    params: Optional[dict] = None,
-    timeout: float = 10,
-) -> Tuple[bool, Any]:
-    """
-    Calls the API and returns (ok, data). On connection failure uses `fallback(db)`.
-    `data` is the JSON body, or {"detail": "..."} when something went wrong.
-    """
-    if not backend_online():
-        if fallback is None:
-            return False, {"detail": "Backend is offline."}
-        return _run_local(fallback)
-    try:
-        response = requests.request(
-            method, f"{API_BASE_URL}{path}", json=json_body, params=params, timeout=timeout
-        )
-        try:
-            data = response.json()
-        except ValueError:
-            data = {"detail": response.text or "Unexpected server response"}
-        if response.status_code == 200:
-            return True, data
-        detail = data.get("detail") if isinstance(data, dict) else data
-        if isinstance(detail, list):  # FastAPI validation errors
-            detail = "; ".join(str(d.get("msg", d)) for d in detail)
-        return False, {"detail": detail}
-    except requests.exceptions.RequestException:
-        if fallback is None:
-            return False, {"detail": "Backend is offline."}
-        return _run_local(fallback)
 
 
 def list_invoices() -> list:
     from backend.services import invoice_service
 
-    ok, data = api_call(
-        "GET", "/invoices", params={"limit": 500},
-        fallback=lambda db: invoice_service.list_invoices(db=db, limit=500),
-    )
+    ws = workspace_id()
+    ok, data = run_db(lambda db: invoice_service.list_invoices(db=db, workspace_id=ws, limit=500))
     return data if ok and isinstance(data, list) else []
 
 
@@ -337,6 +337,17 @@ a, a:visited { color: $accent; }
     color: $muted; font-size: .68rem; font-weight: 800;
     letter-spacing: .13em; text-transform: uppercase; margin: 1.1rem 0 .6rem;
 }
+/* ---------- login page ---------- */
+.login-hero { text-align: center; margin: .5rem 0 1.4rem; }
+.login-mark { margin: 0 auto .8rem; width: 56px; height: 56px; font-size: 1.6rem; }
+.login-title { font-weight: 800; font-size: 2rem; color: $text; letter-spacing: -.03em; }
+.login-title span { color: $primary; }
+.login-sub { color: $muted; font-size: .95rem; max-width: 460px; margin: .4rem auto 0; }
+[data-testid="stTabs"] [data-baseweb="tab-list"] { gap: 1.2rem; }
+.account-box { margin: 0 0 .55rem; padding: 8px 11px; border-radius: 12px;
+    background: $card; border: 1px solid $card_border; }
+.account-email { color: $text; font-size: .8rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+.account-ws { color: $muted; font-size: .72rem; }
 .demo-badge {
     display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; margin: .2rem 0 .9rem;
     border-radius: 999px; font-size: .72rem; font-weight: 700; letter-spacing: .02em;
@@ -538,9 +549,10 @@ def material_name(icon: Optional[str]) -> str:
 
 
 def render_sidebar_brand(pages: list, current=None) -> None:
-    """Sidebar top: brand, small data badge, then the page menu.
+    """Sidebar top: brand, logged-in email + workspace, data badge, page menu,
+    workspace tools (load sample data) and Logout.
     The open page (`current`, from st.navigation) is drawn as a brown pill."""
-    online = backend_online()
+    account = current_account() or {}
     with st.sidebar:
         st.markdown(
             """
@@ -552,11 +564,9 @@ def render_sidebar_brand(pages: list, current=None) -> None:
                 </div>
             </div>
             """
-            + (
-                '<span class="demo-badge">● API connected · demo data</span>'
-                if online
-                else '<span class="demo-badge">● Demo data</span>'
-            ),
+            + f'<div class="account-box"><div class="account-email">{html.escape(account.get("email", ""))}</div>'
+            + f'<div class="account-ws">{html.escape(account.get("workspace_name", ""))}</div></div>'
+            + '<span class="demo-badge">● Demo data</span>',
             unsafe_allow_html=True,
         )
         for page in pages:
@@ -569,6 +579,34 @@ def render_sidebar_brand(pages: list, current=None) -> None:
             else:
                 st.page_link(page)
         st.markdown("---")
+        render_workspace_tools()
+        if st.button("Log out", key="logout_button", icon=":material/logout:", width="stretch"):
+            logout()
+            st.rerun()
+        st.markdown("---")
+
+
+def render_workspace_tools() -> None:
+    """"Load sample data": copy the sample invoices into the user's own workspace."""
+    from backend.services import workspace_service
+
+    ws = workspace_id()
+    with st.expander("Workspace tools", icon=":material/folder_managed:"):
+        ok, count = run_db(lambda db: workspace_service.workspace_invoice_count(db, ws))
+        count = count if ok else 0
+        st.caption(f"{count} invoices in this workspace.")
+        confirm = True
+        if count:
+            confirm = st.checkbox("Replace my current data with the sample data", key="confirm_sample_load")
+        if st.button("Load sample data", key="load_sample_button", width="stretch", disabled=not confirm):
+            email = (current_account() or {}).get("email", "dashboard_user")
+            with st.spinner("Copying the sample data into your workspace..."):
+                done, result = run_db(lambda db: workspace_service.load_sample_data(db, ws, who=email))
+            if done:
+                st.session_state["flash"] = ("ok", f"Loaded {len(result['invoices'])} sample invoices.")
+                st.rerun()
+            else:
+                st.error(result.get("detail"))
 
 
 def render_html_table(rows: List[Dict[str, Any]], status_column: Optional[str] = None,
@@ -601,5 +639,6 @@ def apply_page_style(title: str, subtitle: str) -> None:
     """Page header. Also runs the one-time demo start-up,
     so it must be called before any backend import on the page."""
     demo_setup.ensure_demo_ready()
+    require_login()
     st.title(title)
     st.markdown(f'<div class="vf-sub">{html.escape(subtitle)}</div>', unsafe_allow_html=True)

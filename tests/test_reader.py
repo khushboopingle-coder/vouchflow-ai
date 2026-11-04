@@ -315,20 +315,22 @@ def test_scoring_strict_on_empty_and_failed_extractions():
     assert compare_dates("2026-01-12", "") is False
 
 
-def test_api_extract_and_get_extraction_endpoints(tmp_path):
+def test_api_extract_and_get_extraction_endpoints(tmp_path, api_user):
     """
     Tests POST /invoices/{id}/extract and GET /invoices/{id}/extraction
     using FastAPI TestClient and mocked Gemini.
     """
     client = TestClient(app)
+    H = api_user.headers
+    INV2 = api_user.ids[2]  # the test user's copy of sample invoice 2
 
     # 1. Clean up test extraction from invoice 2
     db = SessionLocal()
-    db.query(InvoiceExtraction).filter(InvoiceExtraction.invoice_id == 2).delete()
+    db.query(InvoiceExtraction).filter(InvoiceExtraction.invoice_id == INV2).delete()
     db.commit()
     db.close()
 
-    r_before_clean = client.get("/invoices/2/extraction")
+    r_before_clean = client.get(f"/invoices/{INV2}/extraction", headers=H)
     assert r_before_clean.status_code == 404
 
     # 2. Mock reader client for POST extraction
@@ -358,11 +360,11 @@ def test_api_extract_and_get_extraction_endpoints(tmp_path):
     try:
         # Check initial status of invoice 2
         db = SessionLocal()
-        initial_status = db.query(Invoice).filter(Invoice.id == 2).first().status
+        initial_status = db.query(Invoice).filter(Invoice.id == INV2).first().status
         db.close()
 
         # Run POST extract
-        response = client.post("/invoices/2/extract")
+        response = client.post(f"/invoices/{INV2}/extract", headers=H)
         assert response.status_code == 200
         data = response.json()
         assert data["vendor"] == "Patel Enterprises"
@@ -371,11 +373,11 @@ def test_api_extract_and_get_extraction_endpoints(tmp_path):
 
         # Check database records
         db = SessionLocal()
-        inv = db.query(Invoice).filter(Invoice.id == 2).first()
-        extraction = db.query(InvoiceExtraction).filter(InvoiceExtraction.invoice_id == 2).first()
+        inv = db.query(Invoice).filter(Invoice.id == INV2).first()
+        extraction = db.query(InvoiceExtraction).filter(InvoiceExtraction.invoice_id == INV2).first()
         audit = db.query(AuditLog).filter(
             AuditLog.action == "invoice_extraction",
-            AuditLog.details.like("%ID 2%")
+            AuditLog.details.like(f"%ID {INV2} %")
         ).first()
 
         # CRITICAL ASSERTION: Invoice status was NOT changed
@@ -386,10 +388,10 @@ def test_api_extract_and_get_extraction_endpoints(tmp_path):
         db.close()
 
         # 3. Test GET extraction endpoint returns saved record
-        r_get = client.get("/invoices/2/extraction")
+        r_get = client.get(f"/invoices/{INV2}/extraction", headers=H)
         assert r_get.status_code == 200
         get_data = r_get.json()
-        assert get_data["invoice_id"] == 2
+        assert get_data["invoice_id"] == INV2
         assert get_data["data"]["vendor"] == "Patel Enterprises"
         assert get_data["data"]["invoice_number"] == "INV-2026-0002"
 
@@ -400,10 +402,10 @@ def test_api_extract_and_get_extraction_endpoints(tmp_path):
         reader.state_tracker = original_tracker
         # Clean up test extraction from invoice 2
         db = SessionLocal()
-        db.query(InvoiceExtraction).filter(InvoiceExtraction.invoice_id == 2).delete()
+        db.query(InvoiceExtraction).filter(InvoiceExtraction.invoice_id == INV2).delete()
         db.query(AuditLog).filter(
             AuditLog.action == "invoice_extraction",
-            AuditLog.details.like("%ID 2%")
+            AuditLog.details.like(f"%ID {INV2} %")
         ).delete()
         db.commit()
         db.close()

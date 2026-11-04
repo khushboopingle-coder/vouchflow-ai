@@ -132,19 +132,20 @@ def run_demo_invoices(log: Callable[[str], None] = print) -> Dict:
     Extraction (Gemini) only runs when a key exists. Nothing is ever approved."""
     from backend.config import settings
     from backend.database.db import SessionLocal
-    from backend.services import invoice_service
+    from backend.services import invoice_service, workspace_service
 
     extraction_used = bool(settings.GEMINI_API_KEY)
     ids = pick_demo_invoice_ids()
     errors: List[str] = []
     db = SessionLocal()
     try:
+        ws = workspace_service.ensure_sample_workspace(db)  # demo invoices live in "sample"
         for invoice_id in ids:
             try:
                 if extraction_used:
-                    invoice_service.extract_invoice_data(db=db, invoice_id=invoice_id, who=DEMO_WHO)
-                invoice_service.check_invoice_matching(db=db, invoice_id=invoice_id, who=DEMO_WHO)
-                invoice_service.investigate_invoice(db=db, invoice_id=invoice_id, who=DEMO_WHO)
+                    invoice_service.extract_invoice_data(db=db, invoice_id=invoice_id, workspace_id=ws, who=DEMO_WHO)
+                invoice_service.check_invoice_matching(db=db, invoice_id=invoice_id, workspace_id=ws, who=DEMO_WHO)
+                invoice_service.investigate_invoice(db=db, invoice_id=invoice_id, workspace_id=ws, who=DEMO_WHO)
                 log(f"Demo setup: invoice {invoice_id} checked and investigated.")
             except Exception as exc:  # one bad invoice must not stop the demo
                 db.rollback()

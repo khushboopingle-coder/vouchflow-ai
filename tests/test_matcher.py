@@ -159,34 +159,36 @@ def test_matcher_failed_or_low_confidence_extraction(db_session):
     assert res_failed.status != "verified"
 
 
-def test_api_check_endpoints():
+def test_api_check_endpoints(api_user):
     """
     Tests POST /invoices/{id}/check and GET /invoices/{id}/check
     via FastAPI TestClient.
     """
     client = TestClient(app)
+    H = api_user.headers
+    INV1 = api_user.ids[1]  # the test user's copy of sample invoice 1
 
     # 1. Clean up check record for invoice 1
     db = SessionLocal()
-    db.query(InvoiceCheck).filter(InvoiceCheck.invoice_id == 1).delete()
+    db.query(InvoiceCheck).filter(InvoiceCheck.invoice_id == INV1).delete()
     db.commit()
     db.close()
 
     # 2. Run POST check
-    resp_post = client.post("/invoices/1/check")
+    resp_post = client.post(f"/invoices/{INV1}/check", headers=H)
     assert resp_post.status_code == 200
     data = resp_post.json()
-    assert data["invoice_id"] == 1
+    assert data["invoice_id"] == INV1
     assert data["status"] == "verified"
     assert data["mistake_types"] == ["none"]
     assert len(data["findings"]) > 0
 
     # 3. Verify record was saved in invoice_checks table
     db = SessionLocal()
-    saved = db.query(InvoiceCheck).filter(InvoiceCheck.invoice_id == 1).first()
+    saved = db.query(InvoiceCheck).filter(InvoiceCheck.invoice_id == INV1).first()
     audit = db.query(AuditLog).filter(
         AuditLog.action == "invoice_check",
-        AuditLog.details.like("%Invoice ID 1%")
+        AuditLog.details.like(f"%Invoice ID {INV1} (%")
     ).first()
 
     assert saved is not None
@@ -195,7 +197,7 @@ def test_api_check_endpoints():
     db.close()
 
     # 4. Run GET check
-    resp_get = client.get("/invoices/1/check")
+    resp_get = client.get(f"/invoices/{INV1}/check", headers=H)
     assert resp_get.status_code == 200
     get_data = resp_get.json()
     assert get_data["id"] == saved.id

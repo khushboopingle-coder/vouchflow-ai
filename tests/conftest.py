@@ -38,3 +38,31 @@ def _isolate_agent_llm(monkeypatch):
         graph._DEAD_MODELS.clear()
     except Exception:
         pass
+
+
+# ---------------------------------------------------------------------------
+# Phase 2: workspaces
+# ---------------------------------------------------------------------------
+@pytest.fixture(scope="session")
+def sample_ws_id():
+    """Id of the shared "sample" workspace (holds the seeded invoices 1-120)."""
+    from backend.database.db import SessionLocal, init_db
+    from backend.services.workspace_service import ensure_sample_workspace
+
+    init_db()
+    db = SessionLocal()
+    try:
+        return ensure_sample_workspace(db)
+    finally:
+        db.close()
+
+
+@pytest.fixture(scope="session")
+def api_user():
+    """A throw-away user with its OWN copy of the sample data and a login token
+    (see tests/helpers.py). .ids maps sample invoice ids -> this user's ids (e.g. .ids[1]).
+    Deleted after the test run."""
+    from tests.helpers import temp_user
+
+    with temp_user() as user:
+        yield user

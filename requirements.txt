@@ -17,6 +17,9 @@ python-dotenv==1.2.2
 psycopg[binary]==3.3.8
 alembic==1.20.1
 
+# Login (Phase 2): password hashing
+bcrypt==5.0.0
+
 # Synthetic Data Generation and PDF Creation
 faker==40.44.0
 reportlab==5.1.0

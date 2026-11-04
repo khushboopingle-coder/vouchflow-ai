@@ -6,12 +6,12 @@ All colours come from ui_common.PALETTE (via CSS classes); none are written here
 """
 
 import html
-import os
+import io
 import sys
+from types import SimpleNamespace
 from pathlib import Path
 
 import pandas as pd
-import requests
 import streamlit as st
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,96 +24,30 @@ import ui_common as ui  # noqa: E402
 
 ui.apply_global_css()  # shared theme (colours from ui_common.PALETTE)
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
+ACCOUNT = ui.require_login()  # stops here when nobody is logged in
+WS = ui.workspace_id()         # every query below is limited to this workspace
 
 # ---------------------------------------------------------------------
-# Backend helpers
+# Data helpers (services called directly, always with this workspace)
 # ---------------------------------------------------------------------
-def fetch_health():
-    """Check whether the FastAPI backend is online."""
-    try:
-        response = requests.get(f"{API_BASE_URL}/health", timeout=2)
-        return response.status_code == 200
-    except requests.exceptions.RequestException:
-        return False
-
-
-def fetch_invoices(status_filter=None):
-    """Fetch invoices from the API, with a local database fallback."""
-    try:
-        params = {"limit": 500}
-        if status_filter and status_filter != "All":
-            params["status"] = status_filter
-        response = requests.get(f"{API_BASE_URL}/invoices", params=params, timeout=3)
-        if response.status_code == 200:
-            data = response.json()
-            return data if isinstance(data, list) else data.get("invoices", [])
-    except requests.exceptions.RequestException:
-        pass
-
-    try:
-        from backend.database.db import SessionLocal
-        from backend.services import invoice_service
-
-        db = SessionLocal()
-        try:
-            status_param = status_filter if status_filter != "All" else None
-            invoices = invoice_service.list_invoices(
-                db=db, status_filter=status_param, limit=500
-            )
-            return [invoice.model_dump() for invoice in invoices]
-        finally:
-            db.close()
-    except Exception as exc:
-        st.error(f"Could not load invoices: {exc}")
-        return []
+def fetch_invoices():
+    return ui.list_invoices()
 
 
 def fetch_single_invoice(invoice_id):
-    """Fetch one invoice from the API, then fall back to the local database."""
-    try:
-        response = requests.get(f"{API_BASE_URL}/invoices/{invoice_id}", timeout=3)
-        if response.status_code == 200:
-            return response.json()
-    except requests.exceptions.RequestException:
-        pass
+    from backend.services import invoice_service
 
-    try:
-        from backend.database.db import SessionLocal
-        from backend.services import invoice_service
-
-        db = SessionLocal()
-        try:
-            invoice = invoice_service.get_invoice_by_id(
-                db=db, invoice_id=invoice_id
-            )
-            return invoice.model_dump() if invoice else None
-        finally:
-            db.close()
-    except Exception:
-        return None
+    ok, data = ui.run_db(lambda db: invoice_service.get_invoice_by_id(db=db, invoice_id=invoice_id, workspace_id=WS))
+    return data if ok else None
 
 
 def upload_invoice_file(file_obj):
-    """Send an uploaded invoice to the FastAPI endpoint."""
-    try:
-        files = {
-            "file": (
-                file_obj.name,
-                file_obj.getvalue(),
-                file_obj.type or "application/pdf",
-            )
-        }
-        response = requests.post(
-            f"{API_BASE_URL}/invoices/upload", files=files, timeout=30
-        )
-        try:
-            payload = response.json()
-        except ValueError:
-            payload = {"detail": response.text or "Unexpected server response"}
-        return response.status_code == 200, payload
-    except requests.exceptions.RequestException as exc:
-        return False, {"detail": str(exc)}
+    """Save an uploaded invoice into this workspace (same rules as POST /invoices/upload)."""
+    from backend.services import invoice_service
+
+    upload = SimpleNamespace(filename=file_obj.name, file=io.BytesIO(file_obj.getvalue()))
+    return ui.run_db(lambda db: invoice_service.save_uploaded_invoice(
+        db=db, file=upload, workspace_id=WS, who=ACCOUNT["email"]))
 
 
 money = ui.money
@@ -139,8 +73,6 @@ def render_metric(label, value, icon, kind, foot):
 # ---------------------------------------------------------------------
 # Sidebar (brand, badge and page menu are drawn by app.py above this)
 # ---------------------------------------------------------------------
-api_status = fetch_health()
-
 with st.sidebar:
     st.markdown('<div class="sidebar-label">Filter ledger</div>', unsafe_allow_html=True)
     status_options = [
@@ -209,13 +141,13 @@ st.markdown(
             </div>
         </div>
         <div class="live-pill"><span class="live-dot"></span>
-            {'WORKSPACE ONLINE' if api_status else 'DEMO WORKSPACE'}</div>
+            {html.escape(ACCOUNT["workspace_name"]).upper()}</div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-all_invoices = fetch_invoices(status_filter=None) or []
+all_invoices = fetch_invoices() or []
 
 # ---------------------------------------------------------------------
 # KPI cards
@@ -285,7 +217,10 @@ with ledger_col:
             or query in str(inv.get("po_number", "")).lower()
         ]
 
-    if not filtered_invoices:
+    if not all_invoices:
+        st.caption("No invoices yet — use **Workspace tools → Load sample data** in the sidebar, "
+                   "or upload an invoice.")
+    elif not filtered_invoices:
         st.info("No invoices match the current filter. Try another status or search term.")
     else:
         ui.render_html_table(
@@ -330,9 +265,9 @@ with insight_col:
             <div class="muted-note">Review and mismatch cases</div>
         </div>
         <div class="surface">
-            <div class="chrome-head">Workflow status</div>
-            <div style="margin-top:4px">{'<span class="vf-pill vf-verified">API connected</span>' if api_status else '<span class="vf-pill vf-other">Demo data (standalone)</span>'}</div>
-            <div class="muted-note" style="margin-top:8px">Backend service connection</div>
+            <div class="chrome-head">Workspace</div>
+            <div style="margin-top:4px"><span class="vf-pill vf-verified">Private</span></div>
+            <div class="muted-note" style="margin-top:8px">Only you can see this data</div>
         </div>
         """,
         unsafe_allow_html=True,

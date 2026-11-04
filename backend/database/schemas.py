@@ -361,3 +361,28 @@ class ApprovalQueueItem(BaseModel):
     recommended_next_action: str
     confidence: float
     investigated_at: datetime
+
+
+# ==========================================
+# Phase 2: Accounts and workspaces
+# ==========================================
+class SignupRequest(BaseModel):
+    email: str = Field(..., max_length=255)
+    password: str = Field(..., min_length=8, max_length=72)
+    load_sample: bool = Field(True, description="Start with a copy of the sample data")
+
+
+class LoginRequest(BaseModel):
+    email: str = Field(..., max_length=255)
+    password: str = Field(..., max_length=72)
+
+
+class AccountRead(BaseModel):
+    email: str
+    workspace_id: int
+    workspace_name: str
+
+
+class TokenResponse(AccountRead):
+    access_token: str
+    token_type: str = "bearer"

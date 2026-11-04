@@ -26,6 +26,8 @@ ui.apply_page_style(
 from backend.database.schemas import DecisionCreate  # noqa: E402
 from backend.services import approval_service, invoice_service  # noqa: E402
 
+WS = ui.workspace_id()  # the logged-in user's workspace: every call below uses it
+
 # Show the result of the last submit (kept across the rerun)
 if "approval_flash" in st.session_state:
     kind, text = st.session_state.pop("approval_flash")
@@ -34,7 +36,7 @@ if "approval_flash" in st.session_state:
 # ---------------------------------------------------------------------
 # Queue
 # ---------------------------------------------------------------------
-ok, queue = ui.api_call("GET", "/approvals/queue", fallback=approval_service.get_approval_queue)
+ok, queue = ui.run_db(lambda db: approval_service.get_approval_queue(db, workspace_id=WS))
 if not ok:
     st.error(f"Could not load the approval queue: {queue.get('detail')}")
     queue = []
@@ -70,10 +72,8 @@ else:
     agent_action = item.get("recommended_next_action")
 
     # Short summary of the agent's report
-    ok_r, report = ui.api_call(
-        "GET", f"/invoices/{invoice_id}/investigation",
-        fallback=lambda db: invoice_service.get_invoice_investigation(db=db, invoice_id=invoice_id),
-    )
+    ok_r, report = ui.run_db(lambda db: invoice_service.get_invoice_investigation(
+        db=db, invoice_id=invoice_id, workspace_id=WS))
     ui.action_box(agent_action, f"**Agent recommendation:** {ui.action_label(agent_action)}")
     if ok_r:
         st.write(report.get("explanation") or "—")
@@ -97,12 +97,8 @@ else:
 
     if submitted:
         body = {"decision": decision, "decided_by": decided_by, "note": note}
-        ok_d, result = ui.api_call(
-            "POST", f"/invoices/{invoice_id}/decision", json_body=body,
-            fallback=lambda db: approval_service.record_decision(
-                db=db, invoice_id=invoice_id, payload=DecisionCreate(**body)
-            ),
-        )
+        ok_d, result = ui.run_db(lambda db: approval_service.record_decision(
+            db=db, invoice_id=invoice_id, payload=DecisionCreate(**body), workspace_id=WS))
         if ok_d:
             st.session_state["approval_flash"] = (
                 "ok", f'{item["invoice_number"]} was {result["decision"]} by {result["decided_by"]}.'
@@ -116,10 +112,7 @@ else:
 # ---------------------------------------------------------------------
 st.markdown("---")
 st.subheader("Recent decisions")
-ok_h, history = ui.api_call(
-    "GET", "/approvals/decisions", params={"limit": 50},
-    fallback=lambda db: approval_service.list_decisions(db=db, limit=50),
-)
+ok_h, history = ui.run_db(lambda db: approval_service.list_decisions(db=db, workspace_id=WS, limit=50))
 if ok_h and history:
     st.dataframe(
         pd.DataFrame([

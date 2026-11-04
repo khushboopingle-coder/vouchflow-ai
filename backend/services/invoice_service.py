@@ -42,10 +42,12 @@ from backend.agent.state import InvestigationReport
 from backend.agent.graph import run_investigation
 from backend.tools.invoice_reader import reader
 from backend.tools.matcher import perform_three_way_match
+from backend.services import workspace_service
 
 
 def list_invoices(
     db: Session,
+    workspace_id: int,
     status_filter: Optional[str] = None,
     skip: int = 0,
     limit: int = 100
@@ -62,6 +64,7 @@ def list_invoices(
         )
     )
 
+    query = query.filter(Invoice.workspace_id == workspace_id)  # only this workspace
     if status_filter:
         query = query.filter(Invoice.status == status_filter)
 
@@ -91,7 +94,7 @@ def list_invoices(
     return results
 
 
-def get_invoice_by_id(db: Session, invoice_id: int) -> InvoiceDetail:
+def get_invoice_by_id(db: Session, invoice_id: int, workspace_id: int) -> InvoiceDetail:
     """
     Retrieves full details for a single invoice including line items,
     supplier details, and purchase order info.
@@ -104,7 +107,7 @@ def get_invoice_by_id(db: Session, invoice_id: int) -> InvoiceDetail:
             joinedload(Invoice.supplier),
             joinedload(Invoice.purchase_order)
         )
-        .filter(Invoice.id == invoice_id)
+        .filter(Invoice.id == invoice_id, Invoice.workspace_id == workspace_id)
         .first()
     )
 
@@ -138,6 +141,7 @@ def get_invoice_by_id(db: Session, invoice_id: int) -> InvoiceDetail:
 def save_uploaded_invoice(
     db: Session,
     file: UploadFile,
+    workspace_id: int,
     who: str = "web_user"
 ) -> UploadResponse:
     """
@@ -194,7 +198,8 @@ def save_uploaded_invoice(
         tax_amount=0.0,
         grand_total=0.0,
         file_path=relative_file_path,
-        status="needs_review"  # New uploads default to 'needs_review'
+        status="needs_review",  # New uploads default to 'needs_review'
+        workspace_id=workspace_id,
     )
     db.add(new_invoice)
     db.flush()  # Acquire generated primary key id
@@ -202,6 +207,7 @@ def save_uploaded_invoice(
     # Create Audit Log entry for this upload
     audit_entry = AuditLog(
         who=who,
+        workspace_id=workspace_id,
         action="invoice_upload",
         details=f"Uploaded file '{original_filename}' saved to '{relative_file_path}'. Created Invoice ID {new_invoice.id} with status 'needs_review'."
     )
@@ -221,6 +227,7 @@ def save_uploaded_invoice(
 def extract_invoice_data(
     db: Session,
     invoice_id: int,
+    workspace_id: int,
     who: str = "api_user"
 ) -> ExtractedInvoice:
     """
@@ -230,12 +237,7 @@ def extract_invoice_data(
 
     CRITICAL INSTRUCTION: Extraction does NOT alter invoice status.
     """
-    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
-    if not inv:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invoice with ID {invoice_id} not found."
-        )
+    inv = workspace_service.require_invoice(db, invoice_id, workspace_id)  # 404 if not ours
 
     if not inv.file_path:
         raise HTTPException(
@@ -275,6 +277,7 @@ def extract_invoice_data(
     # Record audit log entry
     audit_entry = AuditLog(
         who=who,
+        workspace_id=workspace_id,
         action="invoice_extraction",
         details=(
             f"Extracted invoice data for ID {inv.id} ({inv.invoice_number}) "
@@ -292,12 +295,14 @@ def extract_invoice_data(
 
 def get_invoice_extraction(
     db: Session,
-    invoice_id: int
+    invoice_id: int,
+    workspace_id: int
 ) -> InvoiceExtractionDetail:
     """
     Retrieves the most recent extraction record for an invoice.
     Raises 404 if no extraction has been performed yet.
     """
+    workspace_service.require_invoice(db, invoice_id, workspace_id)  # 404 if not ours
     extraction_record = (
         db.query(InvoiceExtraction)
         .filter(InvoiceExtraction.invoice_id == invoice_id)
@@ -334,6 +339,7 @@ def get_invoice_extraction(
 def check_invoice_matching(
     db: Session,
     invoice_id: int,
+    workspace_id: int,
     who: str = "api_user"
 ) -> InvoiceCheckDetail:
     """
@@ -341,12 +347,7 @@ def check_invoice_matching(
     the invoice_checks table, and writes an audit_logs entry.
     CRITICAL: Does NOT overwrite the existing invoice status yet.
     """
-    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
-    if not inv:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invoice with ID {invoice_id} not found."
-        )
+    inv = workspace_service.require_invoice(db, invoice_id, workspace_id)  # 404 if not ours
 
     # Execute matching
     check_result: InvoiceCheckResult = perform_three_way_match(invoice_id, db)
@@ -364,6 +365,7 @@ def check_invoice_matching(
     # Create Audit Log entry
     audit_entry = AuditLog(
         who=who,
+        workspace_id=workspace_id,
         action="invoice_check",
         details=(
             f"3-way matching check on Invoice ID {inv.id} ({inv.invoice_number}): "
@@ -390,12 +392,14 @@ def check_invoice_matching(
 
 def get_invoice_check(
     db: Session,
-    invoice_id: int
+    invoice_id: int,
+    workspace_id: int
 ) -> InvoiceCheckDetail:
     """
     Retrieves the most recent 3-way matching check record for an invoice.
     Raises 404 if no check has been performed yet.
     """
+    workspace_service.require_invoice(db, invoice_id, workspace_id)  # 404 if not ours
     check_record = (
         db.query(InvoiceCheck)
         .filter(InvoiceCheck.invoice_id == invoice_id)
@@ -431,6 +435,7 @@ def get_invoice_check(
 def investigate_invoice(
     db: Session,
     invoice_id: int,
+    workspace_id: int,
     who: str = "api_user"
 ) -> InvestigationReport:
     """
@@ -438,12 +443,7 @@ def investigate_invoice(
     Persists the report in invoice_investigations table.
     NOTE: Invoice status is NOT modified; the agent never decides to approve or pay.
     """
-    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
-    if not inv:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invoice with ID {invoice_id} not found."
-        )
+    inv = workspace_service.require_invoice(db, invoice_id, workspace_id)  # 404 if not ours
 
     # Run LangGraph workflow
     report = run_investigation(invoice_id=invoice_id, db=db, who=who)
@@ -466,18 +466,14 @@ def investigate_invoice(
 
 def get_invoice_investigation(
     db: Session,
-    invoice_id: int
+    invoice_id: int,
+    workspace_id: int
 ) -> InvestigationReport:
     """
     Retrieves the most recent Investigation Agent report for an invoice.
     Raises 404 if no investigation has been performed yet.
     """
-    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
-    if not inv:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invoice with ID {invoice_id} not found."
-        )
+    inv = workspace_service.require_invoice(db, invoice_id, workspace_id)  # 404 if not ours
 
     investigation_record = (
         db.query(InvoiceInvestigation)

@@ -14,9 +14,10 @@ Usage:
     python scripts/seed_db.py --demo-runs     # ... and check + investigate 6 demo invoices
     python scripts/seed_db.py --force         # wipe a PostgreSQL database that has data
 
-Wipes and refills the tables each time. On SQLite this is always allowed (local file).
-On PostgreSQL it refuses to wipe existing invoices unless --force is given.
-The database link is never printed.
+Only the shared "sample" workspace is touched (Phase 2): it is emptied and refilled.
+Users' own workspaces are never changed. On SQLite this is always allowed (local file);
+on PostgreSQL it refuses to replace existing sample invoices unless --force is given.
+Every row gets the sample workspace's id. The database link is never printed.
 """
 
 import argparse
@@ -44,36 +45,31 @@ from backend.database.models import (  # noqa: E402
     GRNItem,
     Invoice,
     InvoiceItem,
-    InvoiceExtraction,
-    InvoiceCheck,
-    InvoiceInvestigation,
-    InvoiceDecision,
     AuditLog
 )
+from backend.services import workspace_service  # noqa: E402
 
 MOCK_DATA_PATH = BASE_DIR / "data" / "evaluation" / "mock_data.json"
 
-# Children first: PostgreSQL enforces foreign keys, so a row can only be deleted
-# after every row that points to it is gone.
-DELETE_ORDER = [
-    InvoiceDecision,
-    InvoiceInvestigation,
-    InvoiceCheck,
-    InvoiceExtraction,
-    AuditLog,
-    InvoiceItem,
-    Invoice,
-    GRNItem,
-    GoodsReceivedNote,
-    POItem,
-    PurchaseOrder,
-    Contract,
-    Supplier,
-]
-
-
 class SeedRefused(RuntimeError):
-    """Raised instead of wiping a non-SQLite database that already has invoices."""
+    """Raised instead of replacing sample data on PostgreSQL without --force, or when a
+    fixed sample id is already used by a user's workspace."""
+
+
+def _check_fixed_ids_free(db, data, sample_id) -> None:
+    """The sample rows keep their fixed ids (ground truth and evals use invoice ids 1-50).
+    Stop if any of those ids belongs to another workspace."""
+    for model, rows in ((Supplier, data["suppliers"]), (PurchaseOrder, data["purchase_orders"]),
+                        (GoodsReceivedNote, data["goods_received_notes"]), (Invoice, data["invoices"])):
+        ids = [r["id"] for r in rows]
+        taken = (db.query(model.id)
+                 .filter(model.id.in_(ids), model.workspace_id.isnot(None), model.workspace_id != sample_id)
+                 .count())
+        if taken:
+            raise SeedRefused(
+                f"{taken} {model.__tablename__} ids needed for the sample data are used by a user's "
+                "workspace. Seed an empty database instead."
+            )
 
 
 def reset_id_counters(db) -> None:
@@ -110,18 +106,18 @@ def seed_database(force: bool = False, demo_runs: bool = False):
 
     db = SessionLocal()
     try:
-        existing = db.query(Invoice).count()
+        sample_id = workspace_service.ensure_sample_workspace(db)
+        existing = workspace_service.workspace_invoice_count(db, sample_id)
         if existing and not settings.is_sqlite and not force:
             raise SeedRefused(
-                f"The {settings.database_kind} database already has {existing} invoices. "
-                "Seeding would delete them. Run again with --force if that is what you want."
+                f"The {settings.database_kind} sample workspace already has {existing} invoices. "
+                "Seeding would replace them. Run again with --force if that is what you want."
             )
 
-        # Clear existing records in proper dependency order
-        print("Clearing existing database records for a fresh seed...")
-        for model in DELETE_ORDER:
-            db.query(model).delete()
-        db.commit()
+        # Clear the sample workspace only (children before parents)
+        print("Clearing the sample workspace for a fresh seed...")
+        workspace_service.clear_workspace_data(db, sample_id, keep_audit_logs=False, allow_sample=True)
+        _check_fixed_ids_free(db, data, sample_id)
 
         # 1. Insert Suppliers
         print(f"Inserting {len(data['suppliers'])} suppliers...")
@@ -133,7 +129,8 @@ def seed_database(force: bool = False, demo_runs: bool = False):
                 contact_email=s["email"],
                 phone=s["phone"],
                 address=s["address"],
-                gstin=s["gstin"]
+                gstin=s["gstin"],
+                workspace_id=sample_id,
             )
             db.add(supplier)
             supplier_map[s["id"]] = supplier
@@ -149,7 +146,8 @@ def seed_database(force: bool = False, demo_runs: bool = False):
                     item_name=p["name"],
                     agreed_unit_price=p["agreed_price"],
                     payment_terms_days=s["payment_terms_days"],
-                    terms_text=f"Standard master pricing agreement for {p['name']} at Rs. {p['agreed_price']:.2f}"
+                    terms_text=f"Standard master pricing agreement for {p['name']} at Rs. {p['agreed_price']:.2f}",
+                    workspace_id=sample_id,
                 )
                 db.add(contract)
                 contract_count += 1
@@ -164,7 +162,8 @@ def seed_database(force: bool = False, demo_runs: bool = False):
                 supplier_id=po_data["supplier_id"],
                 order_date=datetime.strptime(po_data["order_date"], "%Y-%m-%d").date(),
                 status=po_data["status"],
-                total_amount=po_data["total_amount"]
+                total_amount=po_data["total_amount"],
+                workspace_id=sample_id,
             )
             db.add(po)
             db.flush()  # Acquire PO id
@@ -189,7 +188,8 @@ def seed_database(force: bool = False, demo_runs: bool = False):
                 po_id=grn_data["po_id"],
                 received_date=datetime.strptime(grn_data["received_date"], "%Y-%m-%d").date(),
                 received_by=grn_data["received_by"],
-                remarks=grn_data["remarks"]
+                remarks=grn_data["remarks"],
+                workspace_id=sample_id,
             )
             db.add(grn)
             db.flush()
@@ -217,7 +217,8 @@ def seed_database(force: bool = False, demo_runs: bool = False):
                 tax_amount=inv_data["tax_amount"],
                 grand_total=inv_data["grand_total"],
                 file_path=inv_data["file_path"],
-                status=inv_data["status"]
+                status=inv_data["status"],
+                workspace_id=sample_id,
             )
             db.add(inv)
             db.flush()
@@ -237,6 +238,7 @@ def seed_database(force: bool = False, demo_runs: bool = False):
         audit_log = AuditLog(
             who="system_seeder",
             action="database_seed",
+            workspace_id=sample_id,
             details="Database populated with 8 suppliers, 80 contracts, 50 POs, 50 GRNs, and 50 Invoices."
         )
         db.add(audit_log)

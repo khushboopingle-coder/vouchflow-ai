@@ -33,9 +33,9 @@ def test_health_endpoint(client):
     assert response.json() == {"status": "ok"}
 
 
-def test_list_invoices_endpoint(client):
+def test_list_invoices_endpoint(client, api_user):
     """Verifies that GET /invoices returns a list of invoices."""
-    response = client.get("/invoices")
+    response = client.get("/invoices", headers=api_user.headers)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -47,26 +47,26 @@ def test_list_invoices_endpoint(client):
         assert "grand_total" in first
 
 
-def test_get_single_invoice_success(client):
+def test_get_single_invoice_success(client, api_user):
     """Verifies that GET /invoices/{id} returns details and line items for an existing invoice."""
-    # Query invoice with ID 1
-    response = client.get("/invoices/1")
+    # The test user's copy of sample invoice 1
+    response = client.get(f"/invoices/{api_user.ids[1]}", headers=api_user.headers)
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == 1
+    assert data["id"] == api_user.ids[1]
     assert "items" in data
     assert isinstance(data["items"], list)
     assert len(data["items"]) > 0
 
 
-def test_get_single_invoice_not_found(client):
+def test_get_single_invoice_not_found(client, api_user):
     """Verifies that GET /invoices/{id} returns 404 for a non-existent ID."""
-    response = client.get("/invoices/999999")
+    response = client.get("/invoices/999999", headers=api_user.headers)
     assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()
 
 
-def test_upload_invoice_endpoint(client):
+def test_upload_invoice_endpoint(client, api_user):
     """
     Verifies that POST /invoices/upload:
     1. Saves the uploaded file into data/invoices/
@@ -82,7 +82,8 @@ def test_upload_invoice_endpoint(client):
 
     response = client.post(
         "/invoices/upload",
-        files={"file": (test_filename, fake_pdf_content, "application/pdf")}
+        files={"file": (test_filename, fake_pdf_content, "application/pdf")},
+        headers=api_user.headers,
     )
 
     assert response.status_code == 200
@@ -97,6 +98,7 @@ def test_upload_invoice_endpoint(client):
         inv = db.query(Invoice).filter(Invoice.id == created_id).first()
         assert inv is not None
         assert inv.status == "needs_review"
+        assert inv.workspace_id == api_user.workspace_id  # lands in the uploader's workspace
 
         # Verify audit log was recorded
         audit = db.query(AuditLog).filter(AuditLog.details.like(f"%{test_filename}%")).first()
@@ -116,11 +118,22 @@ def test_upload_invoice_endpoint(client):
         uploaded_file_path.unlink()
 
 
-def test_upload_invalid_file_type(client):
+def test_upload_invalid_file_type(client, api_user):
     """Verifies that POST /invoices/upload rejects unsupported file extensions."""
     response = client.post(
         "/invoices/upload",
-        files={"file": ("unsupported_script.py", b"print('malicious')", "text/plain")}
+        files={"file": ("unsupported_script.py", b"print('malicious')", "text/plain")},
+        headers=api_user.headers,
     )
     assert response.status_code == 400
     assert "invalid file type" in response.json()["detail"].lower()
+
+
+def test_data_routes_need_a_login(client):
+    """Without a valid token every data route answers 401 (health stays open)."""
+    for method, path in [("get", "/invoices"), ("get", "/invoices/1"), ("get", "/audit-logs"),
+                         ("get", "/approvals/queue"), ("post", "/invoices/1/check")]:
+        assert getattr(client, method)(path).status_code == 401, path
+        bad = {"Authorization": "Bearer not-a-real-token"}
+        assert getattr(client, method)(path, headers=bad).status_code == 401, path
+    assert client.get("/health").status_code == 200

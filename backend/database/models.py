@@ -8,6 +8,10 @@ Defines database tables:
 - contracts: Master price agreement per supplier and item
 - invoice_extractions: Stored AI/OCR extracted data per invoice
 - audit_logs: Tracking of user/system actions
+- users & workspaces (Phase 2): login accounts; every user owns one private workspace.
+  workspace_id on suppliers, contracts, purchase_orders, goods_received_notes,
+  invoices, invoice_decisions and audit_logs. Child rows (line items, extractions,
+  checks, investigations) belong to the workspace of their parent row.
 """
 
 from datetime import datetime, date
@@ -20,6 +24,8 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Text,
+    Boolean,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 from backend.database.db import Base
@@ -30,6 +36,7 @@ class Supplier(Base):
     __tablename__ = "suppliers"
 
     id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)  # owner workspace
     name = Column(String(255), nullable=False, index=True)
     contact_email = Column(String(255), nullable=True)
     phone = Column(String(50), nullable=True)
@@ -46,9 +53,12 @@ class Supplier(Base):
 class PurchaseOrder(Base):
     """Stores Purchase Orders issued to suppliers."""
     __tablename__ = "purchase_orders"
+    # PO numbers are unique per workspace (two companies may both have "PO-2026-0001")
+    __table_args__ = (UniqueConstraint("workspace_id", "po_number", name="uq_purchase_orders_workspace_po_number"),)
 
     id = Column(Integer, primary_key=True, index=True)
-    po_number = Column(String(100), unique=True, index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)  # owner workspace
+    po_number = Column(String(100), index=True, nullable=False)
     supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=False)
     order_date = Column(Date, default=date.today, nullable=False)
     status = Column(String(50), default="issued", nullable=False)  # issued, fulfilled, cancelled
@@ -80,9 +90,12 @@ class POItem(Base):
 class GoodsReceivedNote(Base):
     """Stores warehouse physical receipt confirmation (GRN)."""
     __tablename__ = "goods_received_notes"
+    # GRN numbers are unique per workspace
+    __table_args__ = (UniqueConstraint("workspace_id", "grn_number", name="uq_goods_received_notes_workspace_grn_number"),)
 
     id = Column(Integer, primary_key=True, index=True)
-    grn_number = Column(String(100), unique=True, index=True, nullable=False)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)  # owner workspace
+    grn_number = Column(String(100), index=True, nullable=False)
     po_id = Column(Integer, ForeignKey("purchase_orders.id"), nullable=False)
     received_date = Column(Date, default=date.today, nullable=False)
     received_by = Column(String(100), nullable=True)  # Warehouse staff name
@@ -119,6 +132,7 @@ class Invoice(Base):
     __tablename__ = "invoices"
 
     id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)  # owner workspace
     invoice_number = Column(String(100), index=True, nullable=False)
     supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=True)
     po_id = Column(Integer, ForeignKey("purchase_orders.id"), nullable=True)
@@ -163,6 +177,7 @@ class Contract(Base):
     __tablename__ = "contracts"
 
     id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)  # owner workspace
     supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=False)
     item_name = Column(String(255), nullable=False)
     agreed_unit_price = Column(Float, nullable=False)
@@ -220,6 +235,7 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)  # owner workspace
     who = Column(String(100), default="system", nullable=False)
     action = Column(String(100), nullable=False)
     time = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -256,10 +272,36 @@ class InvoiceDecision(Base):
     __tablename__ = "invoice_decisions"
 
     id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)  # owner workspace
     invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=False, index=True)
     investigation_id = Column(Integer, ForeignKey("invoice_investigations.id"), nullable=False, index=True)
     decision = Column(String(20), nullable=False)  # approved or rejected
     decided_by = Column(String(100), nullable=False)  # name of the finance person
     note = Column(Text, nullable=True)
     agent_recommendation = Column(String(50), nullable=False)  # what the agent advised at the time
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class User(Base):
+    """A person who can log in to the dashboard. Passwords are stored ONLY as bcrypt hashes."""
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), nullable=False, unique=True, index=True)  # stored lower-case
+    password_hash = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Workspace(Base):
+    """
+    A private data space. Every user gets one on signup (owner_user_id).
+    The special workspace with is_sample=True (name "sample") holds the demo data that
+    users can copy into their own workspace; nobody logs into it.
+    """
+    __tablename__ = "workspaces"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    owner_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, unique=True, index=True)
+    is_sample = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

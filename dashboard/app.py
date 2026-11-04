@@ -3,8 +3,9 @@ VouchFlow AI — dashboard entry point (router)
 =============================================
 Streamlit Community Cloud starts this file (main file path: dashboard/app.py).
 
-It sets up the page, runs the one-time demo start-up, draws the shared sidebar
-(brand, "Demo data" badge, page menu) and then opens the chosen page:
+It sets up the page, runs the one-time demo start-up, shows the login page until
+somebody is logged in (Phase 2), draws the shared sidebar (brand, account, "Demo data"
+badge, page menu, workspace tools, Log out) and then opens the chosen page:
 
     Home           -> dashboard/home.py   (invoice ledger)
     Investigation  -> dashboard/views/investigation.py
@@ -58,7 +59,33 @@ PAGES = [
     st.Page("views/approvals.py", title="Approvals", icon=":material/task_alt:"),
     st.Page("views/evals.py", title="Evals", icon=":material/insights:"),
 ]
-current = st.navigation(PAGES, position="hidden")  # menu is drawn below the brand instead
+LOGGED_IN = st.session_state.get("auth") is not None
+
+
+def _show_login():
+    from views import login
+
+    login.render()
+
+
+def _go_home():
+    st.switch_page(PAGES[0])
+
+
+if LOGGED_IN:
+    # /login while logged in just sends you Home
+    current = st.navigation(PAGES + [st.Page(_go_home, title="Log in", url_path="login")],
+                            position="hidden")  # menu is drawn below the brand instead
+else:
+    # Phase 2: logged out -> EVERY address shows the login screen. The same url paths are
+    # registered (so a link like /approvals never says "Page not found"); after login the
+    # real page opens at that same address.
+    current = st.navigation(
+        [st.Page(_show_login, title="Log in", icon=":material/login:", default=True, url_path="welcome")]
+        + [st.Page(_show_login, title="Log in", url_path=path)
+           for path in ("investigation", "approvals", "evals", "login")],
+        position="hidden",
+    )
 
 demo_setup = _fresh_module("demo_setup")
 ui = _fresh_module("ui_common")
@@ -67,6 +94,13 @@ ui.apply_global_css()
 # Demo start-up: works without API / .env / Gemini key (seeds an empty database once)
 demo_setup.ensure_demo_ready()
 
+if not LOGGED_IN:
+    current.run()
+    st.stop()
+
 ui.render_sidebar_brand(PAGES, current)
+if "flash" in st.session_state:
+    kind, text = st.session_state.pop("flash")
+    (st.success if kind == "ok" else st.error)(text)
 ui.show_demo_banner()
 current.run()

@@ -26,6 +26,8 @@ ui.apply_page_style(
 
 from backend.services import invoice_service  # noqa: E402
 
+WS = ui.workspace_id()  # the logged-in user's workspace: every call below uses it
+
 # ---------------------------------------------------------------------
 # Pick an invoice
 # ---------------------------------------------------------------------
@@ -50,19 +52,15 @@ with button_col:
 
 if run_clicked:
     with st.spinner("Agent is investigating... this can take up to a minute."):
-        ok, data = ui.api_call(
-            "POST", f"/invoices/{invoice_id}/investigate", timeout=180,
-            fallback=lambda db: invoice_service.investigate_invoice(db=db, invoice_id=invoice_id, who="dashboard_user"),
-        )
+        ok, data = ui.run_db(lambda db: invoice_service.investigate_invoice(
+            db=db, invoice_id=invoice_id, workspace_id=WS, who=ui.current_account()["email"]))
     if ok:
         st.success("Investigation finished. It is now waiting on the Approvals page.")
     else:
         st.error(f"Investigation failed: {data.get('detail')}")
 
-ok, report = ui.api_call(
-    "GET", f"/invoices/{invoice_id}/investigation",
-    fallback=lambda db: invoice_service.get_invoice_investigation(db=db, invoice_id=invoice_id),
-)
+ok, report = ui.run_db(lambda db: invoice_service.get_invoice_investigation(
+    db=db, invoice_id=invoice_id, workspace_id=WS))
 if not ok:
     st.info("This invoice has not been investigated yet. Click **Run investigation**.")
     st.stop()

@@ -6,6 +6,7 @@ Regression: pages used to live in dashboard/pages/, which Streamlit treats as it
 old auto-multipage folder -> the router's sidebar and banner disappeared there.
 """
 
+import html
 from pathlib import Path
 
 import pytest
@@ -16,16 +17,17 @@ VIEWS = ["views/investigation.py", "views/approvals.py", "views/evals.py"]
 
 
 def _has_brand(at) -> bool:
-    return any("brand-lockup" in str(getattr(e, "value", "")) for e in at.sidebar)
+    return any('class="brand-lockup"' in str(getattr(e, "value", "")) for e in at.sidebar)
 
 
 def _has_banner(at) -> bool:
-    return any("demo-banner" in m.value for m in at.main.markdown)
+    return any('class="demo-banner"' in m.value for m in at.main.markdown)
 
 
 @pytest.fixture(scope="module")
-def app():
+def app(api_user):
     at = AppTest.from_file(APP, default_timeout=180)
+    at.session_state["auth"] = api_user.session_auth  # logged in as the test user
     at.run()
     return at
 
@@ -43,7 +45,26 @@ def test_every_page_keeps_sidebar_and_banner(app, view):
     assert _has_banner(app), f"demo banner missing on {view}"
 
 
-def test_sidebar_survives_widget_change(app):
+def test_sidebar_survives_widget_change(app, api_user):
     app.switch_page("views/investigation.py").run()
-    app.selectbox(key="investigation_invoice").set_value(1).run()  # invoice ID 1
+    app.selectbox(key="investigation_invoice").set_value(api_user.ids[1]).run()  # user's invoice 1
     assert _has_brand(app) and _has_banner(app)
+
+
+def test_sidebar_shows_account_and_workspace(app, api_user):
+    app.switch_page("home.py").run()
+    sidebar_html = " ".join(str(getattr(e, "value", "")) for e in app.sidebar)
+    assert api_user.email in sidebar_html
+    assert html.escape(api_user.account.workspace_name) in sidebar_html
+    assert any(b.label == "Log out" for b in app.sidebar.button)
+
+
+@pytest.mark.parametrize("view", ["home.py", *VIEWS])
+def test_logged_out_visitor_only_sees_login(view):
+    at = AppTest.from_file(APP, default_timeout=180)
+    at.run()
+    if view != "home.py":
+        at.switch_page(view).run()
+    assert not at.exception
+    assert not _has_brand(at) and not _has_banner(at)  # no workspace content at all
+    assert [t.label for t in at.tabs] == ["Log in", "Create account"]
