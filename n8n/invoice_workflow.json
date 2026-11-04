@@ -1,0 +1,176 @@
+{
+  "name": "VouchFlow - Gmail invoices to Telegram alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
+        "simple": false,
+        "filters": { "q": "has:attachment" },
+        "options": { "downloadAttachments": true }
+      },
+      "id": "5a1d0f10-0001-4c1b-9a10-000000000001",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300],
+      "notes": "Starts when a new email with an attachment arrives. Pick your Gmail credential here.",
+      "credentials": { "gmailOAuth2": { "name": "Gmail account" } }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a0000001-0000-4000-8000-000000000001",
+              "name": "api_base_url",
+              "value": "http://localhost:8000",
+              "type": "string"
+            },
+            {
+              "id": "a0000001-0000-4000-8000-000000000002",
+              "name": "telegram_chat_id",
+              "value": "PASTE_YOUR_TELEGRAM_CHAT_ID",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5a1d0f10-0002-4c1b-9a10-000000000002",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 300],
+      "notes": "EDIT THESE TWO VALUES: the address of your VouchFlow API and your Telegram chat id. No secrets here."
+    },
+    {
+      "parameters": {
+        "jsCode": "// One item per PDF/image attachment, carrying the two settings from the Settings node.\nconst cfg = $input.first().json;\nconst out = [];\nfor (const mail of $('Gmail Trigger').all()) {\n  for (const bin of Object.values(mail.binary || {})) {\n    const type = String(bin.mimeType || '').toLowerCase();\n    if (type === 'application/pdf' || type.startsWith('image/')) {\n      out.push({\n        json: {\n          api_base_url: cfg.api_base_url,\n          telegram_chat_id: cfg.telegram_chat_id,\n          email_subject: mail.json.subject || '',\n          email_from: (mail.json.from && mail.json.from.text) || '',\n          filename: bin.fileName || 'invoice.pdf',\n        },\n        binary: { data: bin },\n      });\n    }\n  }\n}\nreturn out;"
+      },
+      "id": "5a1d0f10-0003-4c1b-9a10-000000000003",
+      "name": "Split attachments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "notes": "Keeps only PDF and image attachments (one item each)."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.api_base_url }}/api/invoices/ingest",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "parameterType": "formBinaryData", "name": "file", "inputDataFieldName": "data" }
+          ]
+        },
+        "options": { "timeout": 180000 }
+      },
+      "id": "5a1d0f10-0004-4c1b-9a10-000000000004",
+      "name": "VouchFlow ingest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
+      "notes": "Sends the invoice to VouchFlow. Credential: Header Auth with Name X-API-Key and your key as Value. The key is NOT stored in this file.",
+      "credentials": { "httpHeaderAuth": { "name": "VouchFlow API key" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "b0000001-0000-4000-8000-000000000001",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "mismatch_detected",
+              "operator": { "type": "string", "operation": "equals" }
+            },
+            {
+              "id": "b0000001-0000-4000-8000-000000000002",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "needs_review",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "5a1d0f10-0005-4c1b-9a10-000000000005",
+      "name": "Mismatch or needs review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Split attachments').item.json.telegram_chat_id }}",
+        "text": "={{ '⚠️ ' + $json.text + '\\n(File: ' + $('Split attachments').item.json.filename + ')' }}",
+        "additionalFields": { "appendAttribution": false }
+      },
+      "id": "5a1d0f10-0006-4c1b-9a10-000000000006",
+      "name": "Telegram: problem found",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1140, 100],
+      "notes": "Supplier, amount, the problem and the dashboard link.",
+      "credentials": { "telegramApi": { "name": "Telegram bot" } }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Split attachments').item.json.telegram_chat_id }}",
+        "text": "={{ '✅ Invoice ' + $json.invoice_number + ' (' + ($json.supplier_name || 'unknown supplier') + ', Rs. ' + Number($json.grand_total).toLocaleString('en-IN') + ') is verified.\\nA person still has to approve it: ' + $json.dashboard_link }}",
+        "additionalFields": { "appendAttribution": false }
+      },
+      "id": "5a1d0f10-0007-4c1b-9a10-000000000007",
+      "name": "Telegram: verified",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1140, 300],
+      "notes": "Short message for clean invoices. Nothing is approved automatically.",
+      "credentials": { "telegramApi": { "name": "Telegram bot" } }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Split attachments').item.json.telegram_chat_id }}",
+        "text": "={{ '❌ VouchFlow could not process ' + $('Split attachments').item.json.filename + ': ' + ($json.error ? $json.error.message : 'unknown error') }}",
+        "additionalFields": { "appendAttribution": false }
+      },
+      "id": "5a1d0f10-0008-4c1b-9a10-000000000008",
+      "name": "Telegram: ingest failed",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [900, 480],
+      "notes": "Tells you when the API refuses the file (wrong key = 401, too many calls = 429, bad file = 400).",
+      "credentials": { "telegramApi": { "name": "Telegram bot" } }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": { "main": [[{ "node": "Settings", "type": "main", "index": 0 }]] },
+    "Settings": { "main": [[{ "node": "Split attachments", "type": "main", "index": 0 }]] },
+    "Split attachments": { "main": [[{ "node": "VouchFlow ingest", "type": "main", "index": 0 }]] },
+    "VouchFlow ingest": {
+      "main": [
+        [{ "node": "Mismatch or needs review?", "type": "main", "index": 0 }],
+        [{ "node": "Telegram: ingest failed", "type": "main", "index": 0 }]
+      ]
+    },
+    "Mismatch or needs review?": {
+      "main": [
+        [{ "node": "Telegram: problem found", "type": "main", "index": 0 }],
+        [{ "node": "Telegram: verified", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "tags": []
+}

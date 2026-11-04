@@ -95,7 +95,7 @@ python scripts/run_agent_eval.py         #        eval_hard_v2
 - Done: Foundation, Phase 1 reader, Phases 2–3 checker, Phase 4 contract search,
   Phase 5 agent with guardrails and evals (agent 20/20 on test set),
   Phase 8 dashboard pages (Investigation, Approvals, Evals) + approvals backend.
-- Master plan (VOUCHFLOW_MASTER_PLAN.md): Phases 2 (login + workspaces), 3 (own data + AI limits) and 4 (ingest API) DONE; see PROGRESS.md.
+- Master plan (VOUCHFLOW_MASTER_PLAN.md): Phases 2 (login + workspaces), 3 (own data + AI limits) 4 (ingest API) and 5 (n8n files) DONE; see PROGRESS.md.
 - Pending idea (not done, needs OK): switch `langchain_community.vectorstores.Chroma`
   to `langchain_chroma` package.
 
@@ -112,6 +112,9 @@ python scripts/run_agent_eval.py         #        eval_hard_v2
   (`backend/auth/dependencies.py::api_key_account`, rate limit in `backend/auth/rate_limit.py`).
 - `init_db()` runs Alembic for PostgreSQL and for Alembic-managed SQLite files; new empty SQLite -> create_all.
 - Neon has real user accounts now (e.g. a signup made by the owner): tests never touch Neon; never delete users there.
+- `n8n/` (Phase 5): `invoice_workflow.json` (Gmail->ingest->Telegram), `webhook_workflow.json`, beginner `README.md`.
+  Credentials only by name, never keys in JSON (`tests/test_n8n_workflows.py` scans). Sample invoices in `data/samples/`
+  (made by `scripts/make_sample_invoices.py`; match the CSV templates).
 - PROGRESS.md tracks the master plan (Phases 2-7) and where to continue.
 - `.env` has TWO `DATABASE_URL` lines (line 2 SQLite, line 8 Neon); the last one wins -> Neon.
 - Tests are forced to SQLite by `tests/conftest.py` (set `TEST_DATABASE_URL` to override).

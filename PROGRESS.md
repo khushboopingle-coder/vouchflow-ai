@@ -1,7 +1,7 @@
 # VouchFlow AI — Progress
 
 Follows `VOUCHFLOW_MASTER_PLAN.md` (Phases 2–7). One commit per phase.
-**Continue from:** Phase 5 (Phases 2, 3 and 4 are done and pushed).
+**Continue from:** Phase 6 (Phases 2 to 5 are done and pushed).
 
 ---
 
@@ -174,8 +174,42 @@ curl.exe -X POST "http://127.0.0.1:8000/api/invoices/ingest" -H "X-API-Key: PAST
 ```
 Wrong key -> 401. Open the returned `dashboard_link` after logging in. Interactive docs: http://127.0.0.1:8000/docs.
 
+## Phase 5 - n8n automation ✅ (files and guide; see "not machine-tested" below)
+**What was built (folder `n8n/`)**
+- `invoice_workflow.json` - **Gmail Trigger** (new email with attachment) -> **Settings** (API address + Telegram chat id)
+  -> **Split attachments** (only PDF/images, one item each) -> **VouchFlow ingest** (HTTP POST to `/api/invoices/ingest`,
+  `X-API-Key` from an n8n *Header Auth* credential) -> **IF** status is `mismatch_detected` or `needs_review`
+  -> **Telegram: problem found** (supplier, amount, problems, recommended action, dashboard link), otherwise
+  **Telegram: verified** (short message). If the API refuses the file (401 wrong key, 429 too many calls,
+  400 bad file) a third **Telegram: ingest failed** message says why.
+- `webhook_workflow.json` - the simpler one: **Webhook** (POST, multipart file) -> ingest -> **Respond to Webhook** with
+  the VouchFlow JSON (or a 502 error JSON). No Gmail, no Telegram; only the API-key credential is needed.
+- `n8n/README.md` - beginner guide: start VouchFlow, create an API key, install/start n8n (`npx n8n`, localhost:5678),
+  import the webhook workflow, create the Header Auth credential, test with `curl.exe`, then the Telegram bot
+  (BotFather, chat id) and Gmail credentials, activating, troubleshooting table, safety notes.
+- `data/samples/sample_invoice_clean.pdf` and `sample_invoice_price_mismatch.pdf` (fake; made by
+  `python scripts/make_sample_invoices.py`). They match the CSV templates on the My data page (Acme Office Supplies,
+  PO-1001), so the whole demo works from an empty workspace.
+- **No secrets in the workflow files:** the key and the bot token are n8n *credentials* referenced by name only
+  (a test scans for key/token patterns and credential ids). Workflows are exported inactive.
+
+**Tests:** `tests/test_n8n_workflows.py` (10: valid JSON, unique node ids/names, every connection points at a real node,
+correct flow, key via credential, no secrets), `tests/test_sample_invoices.py` (3: the PDFs contain the expected numbers;
+the full demo story runs offline with the reader faked: clean invoice -> `verified`, other -> `price_mismatch`).
+
+**Not machine-tested (please do this once):** I could not import the JSON into a real n8n here (it needs downloading n8n
+with `npx`, which was not allowed in this environment), and I cannot log in to Gmail/Telegram for you. So the files are
+checked for structure and secrets only. If n8n shows a small warning on import (node version, missing credential), pick
+your credential in the node and save. Test the **webhook workflow first**; it needs the fewest pieces.
+
+**Decisions I made**
+- The two settings you may need to edit (API address, Telegram chat id) sit in one **Settings** node, not in code.
+- The Code node reads attachments from the trigger node by name, so each PDF/image becomes its own item.
+- Verified invoices also send a Telegram message (short), as the plan asked, and still say a person must approve.
+
+**How to test it yourself:** follow `n8n/README.md` Part 1-3 (about 10 minutes, no Gmail needed).
+
 ## What is left
-- **Phase 5** — n8n workflows (Gmail + webhook), beginner n8n README, sample invoice.
 - **Phase 6** — Docker, docker-compose, render.yaml, secrets example, startup check, DEPLOY.md.
 - **Phase 7** — README with real eval numbers, limitations, security, screenshots checklist.
 
@@ -184,7 +218,7 @@ Wrong key -> 401. Open the returned `dashboard_link` after logging in. Interacti
 - [x] Sample data loads in one click; the Demo banner shows only on sample
 - [x] User can upload their own invoice, PO, GRN and contract
 - [x] Ingest API works with an API key; wrong key gives 401
-- [ ] n8n workflow files and README are in the repo
+- [x] n8n workflow files and README are in the repo (import into real n8n still to be tried by you)
 - [ ] Docker and DEPLOY.md are ready
 - [x] pytest passes (187 tests)
 - [ ] No secrets in git (checked before every commit; final check in Phase 7)
