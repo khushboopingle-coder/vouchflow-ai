@@ -9,6 +9,11 @@ Endpoints:
 - POST /invoices/{id}/extract    : Runs AI/OCR extraction and saves to invoice_extractions
 - GET /invoices/{id}/extraction  : Returns the saved extraction record
 - GET /audit-logs                : Lists recent audit log records
+- POST /invoices/{id}/investigate: Runs the Investigation Agent
+- GET /invoices/{id}/investigation: Latest Investigation Agent report
+- POST /invoices/{id}/decision   : HUMAN approve / reject (Phase 8)
+- GET /approvals/queue           : Investigated invoices waiting for a human decision
+- GET /approvals/decisions       : Recent human decisions
 """
 
 from typing import List, Optional
@@ -21,7 +26,7 @@ from backend.database.db import get_db, init_db
 from backend.database import schemas
 from backend.database.models import AuditLog
 from backend.agent.state import InvestigationReport
-from backend.services import invoice_service
+from backend.services import invoice_service, approval_service
 
 
 @asynccontextmanager
@@ -243,3 +248,50 @@ def get_invoice_investigation_endpoint(
     """
     return invoice_service.get_invoice_investigation(db=db, invoice_id=invoice_id)
 
+
+# ---------------------------------------------------------------------
+# Phase 8: Human approvals
+# ---------------------------------------------------------------------
+@app.post(
+    "/invoices/{invoice_id}/decision",
+    response_model=schemas.DecisionRead,
+    summary="Record a HUMAN approve / reject decision",
+    tags=["Approvals"]
+)
+def record_decision_endpoint(
+    invoice_id: int,
+    payload: schemas.DecisionCreate,
+    db: Session = Depends(get_db)
+):
+    """
+    Saves a finance person's decision on the latest investigation of an invoice.
+    Refuses software names (agent, system, n8n...), requires an investigation first,
+    and requires a note for rejections or when overriding the agent's advice.
+    Writes an audit log. Invoice status is NOT modified.
+    """
+    return approval_service.record_decision(db=db, invoice_id=invoice_id, payload=payload)
+
+
+@app.get(
+    "/approvals/queue",
+    response_model=List[schemas.ApprovalQueueItem],
+    summary="Invoices waiting for a human decision",
+    tags=["Approvals"]
+)
+def approval_queue_endpoint(db: Session = Depends(get_db)):
+    """Lists invoices whose latest investigation has not been decided yet (oldest first)."""
+    return approval_service.get_approval_queue(db=db)
+
+
+@app.get(
+    "/approvals/decisions",
+    response_model=List[schemas.DecisionRead],
+    summary="Recent human decisions",
+    tags=["Approvals"]
+)
+def list_decisions_endpoint(
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db)
+):
+    """Returns recent approve / reject decisions, newest first."""
+    return approval_service.list_decisions(db=db, limit=limit)

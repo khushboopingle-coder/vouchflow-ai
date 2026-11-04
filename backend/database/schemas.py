@@ -4,7 +4,7 @@ Used for API request validation and response serialization.
 """
 
 from datetime import datetime, date
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -325,3 +325,39 @@ class UploadResponse(BaseModel):
     file_name: str
     status: str
     file_path: str
+
+
+# ==========================================
+# Phase 8: Human Approval Schemas
+# ==========================================
+class DecisionCreate(BaseModel):
+    """Body for POST /invoices/{id}/decision. Only a human may send this."""
+    decision: Literal["approved", "rejected"] = Field(..., description="approved or rejected")
+    decided_by: str = Field(..., min_length=2, max_length=100, description="Full name of the finance person deciding")
+    note: Optional[str] = Field(None, max_length=2000, description="Reason for the decision")
+
+
+class DecisionRead(BaseModel):
+    id: int
+    invoice_id: int
+    investigation_id: int
+    decision: str
+    decided_by: str
+    note: Optional[str] = None
+    agent_recommendation: str
+    created_at: datetime
+    invoice_number: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ApprovalQueueItem(BaseModel):
+    """An invoice whose latest investigation is waiting for a human decision."""
+    invoice_id: int
+    invoice_number: str
+    supplier_name: Optional[str] = None
+    grand_total: float
+    investigation_id: int
+    investigation_status: str
+    recommended_next_action: str
+    confidence: float
+    investigated_at: datetime

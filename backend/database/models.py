@@ -245,3 +245,21 @@ class InvoiceInvestigation(Base):
     # Relationships
     invoice = relationship("Invoice", back_populates="investigations")
 
+
+class InvoiceDecision(Base):
+    """
+    Phase 8: A HUMAN approval or rejection of an invoice.
+    Each decision is linked to the investigation report the person looked at.
+    The Investigation Agent can never create rows here (see approval_service).
+    The original invoices.status column is NOT changed by a decision.
+    """
+    __tablename__ = "invoice_decisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=False, index=True)
+    investigation_id = Column(Integer, ForeignKey("invoice_investigations.id"), nullable=False, index=True)
+    decision = Column(String(20), nullable=False)  # approved or rejected
+    decided_by = Column(String(100), nullable=False)  # name of the finance person
+    note = Column(Text, nullable=True)
+    agent_recommendation = Column(String(50), nullable=False)  # what the agent advised at the time
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
