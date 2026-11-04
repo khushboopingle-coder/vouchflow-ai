@@ -7,6 +7,7 @@ owns the workspace in the token. Anything wrong -> 401. Routes then pass
 account.workspace_id to the services, which only ever read that workspace.
 """
 
+from dataclasses import dataclass
 from typing import Optional
 
 from fastapi import Depends, Header, HTTPException, status
@@ -14,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from backend.auth.tokens import verify_token
 from backend.database.db import get_db
+from backend.services import api_key_service
 from backend.services.auth_service import Account, account_for
 
 UNAUTHORIZED = HTTPException(
@@ -36,3 +38,32 @@ def current_account(
     if account is None:
         raise UNAUTHORIZED
     return account
+
+
+@dataclass(frozen=True)
+class APIKeyAccount:
+    """Who an API key stands for: exactly one workspace."""
+    key_id: int
+    workspace_id: int
+    key_name: str
+    key_prefix: str
+
+
+UNAUTHORIZED_KEY = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Missing or invalid API key. Send your key in the X-API-Key header "
+           "(create one on the dashboard's Settings page).",
+)
+
+
+def api_key_account(
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    db: Session = Depends(get_db),
+) -> APIKeyAccount:
+    """Automation routes (/api/...): the X-API-Key header identifies the workspace.
+    Missing, wrong or revoked key -> 401. A login token does NOT work here, and an API key
+    does not work on the dashboard routes."""
+    record = api_key_service.authenticate_api_key(db, x_api_key)
+    if record is None:
+        raise UNAUTHORIZED_KEY
+    return APIKeyAccount(record.id, record.workspace_id, record.name, record.key_prefix)

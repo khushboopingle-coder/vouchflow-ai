@@ -22,6 +22,11 @@ Needs "Authorization: Bearer <token>" and only ever shows the caller's own works
 - POST /invoices/{id}/decision      : HUMAN approve / reject
 - GET  /approvals/queue             : Investigated invoices waiting for a human decision
 - GET  /approvals/decisions         : Recent human decisions
+
+Automation (Phase 4) - header "X-API-Key: vf_..." (create keys on the dashboard's Settings page).
+The key identifies ONE workspace; wrong/missing/revoked key -> 401; nothing is ever approved:
+- POST /api/invoices/ingest         : file -> save, extract, match, investigate -> JSON
+- GET  /api/invoices/{id}/summary   : short summary for alerts
 """
 
 from typing import List
@@ -30,13 +35,14 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Query, st
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from backend.auth.dependencies import current_account
+from backend.auth import rate_limit
+from backend.auth.dependencies import APIKeyAccount, api_key_account, current_account
 from backend.auth.tokens import create_token
 from backend.database.db import get_db, init_db
 from backend.database import schemas
 from backend.database.models import AuditLog
 from backend.agent.state import InvestigationReport
-from backend.services import invoice_service, approval_service, auth_service
+from backend.services import invoice_service, approval_service, auth_service, ingest_service, upload_service
 from backend.services.auth_service import Account, AuthError
 
 
@@ -321,3 +327,48 @@ def list_decisions_endpoint(
 ):
     """Recent approve / reject decisions of the caller's workspace, newest first."""
     return approval_service.list_decisions(db=db, workspace_id=account.workspace_id, limit=limit)
+
+
+# ---------------------------------------------------------------------
+# Automation (Phase 4): X-API-Key instead of a login token
+# ---------------------------------------------------------------------
+@app.post(
+    "/api/invoices/ingest",
+    response_model=schemas.IngestResponse,
+    summary="Ingest an invoice file: save, extract, match, investigate",
+    tags=["Automation"]
+)
+def ingest_invoice_endpoint(
+    file: UploadFile = File(..., description="Invoice document (PDF, PNG, JPG), up to 10 MB"),
+    db: Session = Depends(get_db),
+    key: APIKeyAccount = Depends(api_key_account),
+):
+    """
+    Saves the invoice in the key's workspace, reads it (needs a Gemini key on the server),
+    runs the 3-way match and the Investigation Agent, and returns the result as JSON with a
+    dashboard link. Rate limited per key (429). It NEVER approves or pays: a person decides.
+    """
+    rate_limit.check_rate_limit(key.key_id)
+    data = file.file.read(upload_service.MAX_UPLOAD_BYTES + 1)
+    try:
+        return ingest_service.ingest_invoice(
+            db, key.workspace_id, file.filename or "invoice.pdf", data, who=f"api_key:{key.key_prefix}"
+        )
+    except upload_service.UploadError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
+
+
+@app.get(
+    "/api/invoices/{invoice_id}/summary",
+    response_model=schemas.InvoiceSummary,
+    summary="Short summary of an invoice, for alerts",
+    tags=["Automation"]
+)
+def invoice_summary_endpoint(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    key: APIKeyAccount = Depends(api_key_account),
+):
+    """Status, problems, recommended action, dashboard link and a ready-to-send text.
+    An invoice of another workspace answers 404."""
+    return ingest_service.build_summary(db, key.workspace_id, invoice_id)

@@ -1,7 +1,7 @@
 # VouchFlow AI — Progress
 
 Follows `VOUCHFLOW_MASTER_PLAN.md` (Phases 2–7). One commit per phase.
-**Continue from:** Phase 4 (Phases 2 and 3 are done and pushed).
+**Continue from:** Phase 5 (Phases 2, 3 and 4 are done and pushed).
 
 ---
 
@@ -125,8 +125,56 @@ download the three CSV templates and upload them -> upload a PDF invoice -> uplo
 .txt with a supplier name -> Investigation page shows the AI checkbox. A second account never sees
 these. Sidebar -> Workspace tools -> Reset to sample data / Delete my workspace.
 
+## Phase 4 - Ingest API for automation ✅
+**What was built**
+- **Settings page** (sidebar menu): create an API key with a name, see it **once**, list keys
+  (name, first characters, created, last used, active/revoked), **Revoke**. Up to 10 active keys per workspace.
+- **Keys are safe:** format `vf_<random>`; only the **SHA-256 hash** is stored (never the key); the key identifies
+  exactly ONE workspace, so n8n can only reach that workspace's data. Header: `X-API-Key`.
+- **`POST /api/invoices/ingest`** (file upload): saves the file into the key's workspace -> reads it with Gemini
+  (if the server has a key) -> fills the invoice row (number, dates, totals, line items, supplier/PO if they exist
+  in that workspace) -> 3-way match -> Investigation Agent (template explanation, no AI quota) -> JSON:
+  `invoice_id, invoice_number, supplier_name, grand_total, status, mistakes, difference_amount,
+  recommended_action, extraction_ok, dashboard_link, human_approval_required (always true), message, text`.
+  `text` is a ready-to-send alert message (for the Telegram step in n8n).
+- **`GET /api/invoices/{id}/summary`**: the same short summary for an invoice already in the workspace (404 for
+  another workspace's invoice).
+- **Rate limit:** 20 calls per minute per key (`INGEST_RATE_LIMIT_PER_MINUTE`), answer 429 + `Retry-After`.
+- **401** for a missing, wrong, revoked or malformed key. A login token does not work on `/api/...` and an
+  API key does not work on the dashboard routes.
+- **Never auto-approves:** ingest creates no decision; every answer says a person must approve in the dashboard.
+- Dashboard links look like `<DASHBOARD_URL>/investigation?invoice=<id>`; the Investigation page opens that invoice.
+- Migration `0004` (`api_keys`) applied to local SQLite and Neon.
+- `init_db()` now runs the Alembic migrations for a SQLite file that Alembic already manages (so a new migration
+  never clashes with tables created by hand); a brand-new SQLite file still uses `create_all`.
+
+**Decisions I made**
+- Ingest uses the **template** explanation always: an automation must not spend anyone's Gemini quota on explanations.
+  Reading the invoice (extraction) does use Gemini if the server has a key; it is limited only by the per-key rate limit.
+  (A daily cap per workspace would be a sensible next step.)
+- Without a Gemini key on the server the invoice is still saved, matched and investigated, but lands in
+  `needs_review` with `extraction_ok: false` - honest instead of guessing.
+- A vendor name found by extraction is only linked to a supplier that already exists in the workspace (no junk
+  suppliers are created from misread names).
+- The rate-limit counters are in memory (one server process). Fine for the free tier; use Redis if you scale out.
+- `DASHBOARD_URL` (default `http://localhost:8501`) must be set to the public dashboard address for useful links.
+
+**Tests:** `tests/test_ingest_api.py` (20 tests; Gemini faked): hash-only storage, 401s, revoked keys, no cross-workspace
+access (keys and summaries), token/key not interchangeable, JSON shape, never approves, 400 for bad files, 429,
+Settings page create-once/revoke.
+
+**How to test it yourself**
+```
+python -m uvicorn backend.main:app --reload
+streamlit run dashboard/app.py
+```
+Dashboard -> Settings -> create a key and copy it. Then (PowerShell):
+```
+curl.exe -X POST "http://127.0.0.1:8000/api/invoices/ingest" -H "X-API-Key: PASTE_KEY_HERE" -F "file=@data/invoices/INV_001.pdf"
+```
+Wrong key -> 401. Open the returned `dashboard_link` after logging in. Interactive docs: http://127.0.0.1:8000/docs.
+
 ## What is left
-- **Phase 4** — ingest API with workspace API keys (Settings page), summary endpoint, rate limit.
 - **Phase 5** — n8n workflows (Gmail + webhook), beginner n8n README, sample invoice.
 - **Phase 6** — Docker, docker-compose, render.yaml, secrets example, startup check, DEPLOY.md.
 - **Phase 7** — README with real eval numbers, limitations, security, screenshots checklist.
@@ -135,7 +183,7 @@ these. Sidebar -> Workspace tools -> Reset to sample data / Delete my workspace.
 - [x] Two different users cannot see each other's data (tests prove it)
 - [x] Sample data loads in one click; the Demo banner shows only on sample
 - [x] User can upload their own invoice, PO, GRN and contract
-- [ ] Ingest API works with an API key; wrong key gives 401
+- [x] Ingest API works with an API key; wrong key gives 401
 - [ ] n8n workflow files and README are in the repo
 - [ ] Docker and DEPLOY.md are ready
 - [x] pytest passes (187 tests)

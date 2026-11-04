@@ -320,3 +320,22 @@ class AIUsage(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     day = Column(Date, nullable=False)
     count = Column(Integer, default=0, nullable=False)
+
+
+class APIKey(Base):
+    """
+    Phase 4: a key that lets automation (n8n) call the ingest API for ONE workspace.
+    Only the SHA-256 hash is stored; the key itself is shown once, when it is created.
+    key_prefix (first characters) just helps a person recognise the key in the list.
+    """
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False, index=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    name = Column(String(100), nullable=False)
+    key_prefix = Column(String(16), nullable=False)
+    key_hash = Column(String(64), nullable=False, unique=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_used_at = Column(DateTime, nullable=True)
+    revoked_at = Column(DateTime, nullable=True)

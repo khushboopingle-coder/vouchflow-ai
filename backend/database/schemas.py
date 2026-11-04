@@ -386,3 +386,28 @@ class AccountRead(BaseModel):
 class TokenResponse(AccountRead):
     access_token: str
     token_type: str = "bearer"
+
+
+# ==========================================
+# Phase 4: Ingest API for automation (n8n)
+# ==========================================
+class InvoiceSummary(BaseModel):
+    """Short summary of a checked invoice, for alerts."""
+    invoice_id: int
+    invoice_number: str
+    supplier_name: Optional[str] = None
+    grand_total: float
+    status: str = Field(..., description="verified, mismatch_detected or needs_review")
+    mistakes: List[str] = Field(default_factory=list, description="e.g. price_mismatch, quantity_mismatch")
+    difference_amount: float = 0.0
+    recommended_action: Optional[str] = None
+    dashboard_link: str
+    human_approval_required: bool = True
+    text: str = Field(..., description="Ready-to-send message for Telegram / email")
+
+
+class IngestResponse(InvoiceSummary):
+    """Answer of POST /api/invoices/ingest."""
+    extraction_ok: bool = Field(..., description="False when the invoice could not be read (no AI key / unreadable)")
+    extraction_confidence: float = 0.0
+    message: str

@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 
 from backend.database.models import (
     AIUsage,
+    APIKey,
     AuditLog,
     Contract,
     GoodsReceivedNote,
@@ -164,6 +165,7 @@ def delete_workspace(db: Session, workspace_id: int, delete_owner: bool = True) 
         raise ValueError("The sample workspace cannot be deleted.")
     owner_id = ws.owner_user_id
     clear_workspace_data(db, workspace_id, keep_audit_logs=False)
+    db.query(APIKey).filter(APIKey.workspace_id == workspace_id).delete(synchronize_session=False)
     db.delete(ws)
     db.commit()
     if delete_owner and owner_id is not None:

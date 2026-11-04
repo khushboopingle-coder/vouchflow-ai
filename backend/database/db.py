@@ -62,18 +62,27 @@ def upgrade_database() -> None:
     command.upgrade(Config(str(ALEMBIC_INI)), "head")
 
 
+def _is_alembic_managed() -> bool:
+    """True if this database already has Alembic's version table, i.e. its schema is
+    managed by the migrations (so create_all must not be used on it)."""
+    from sqlalchemy import inspect
+
+    return "alembic_version" in inspect(engine).get_table_names()
+
+
 def init_db() -> None:
     """
-    Makes sure all tables exist.
-    - SQLite: create any missing tables directly (fast; used by tests and the cloud demo).
-    - PostgreSQL: run the Alembic migrations once per process.
+    Makes sure all tables exist and are up to date.
+    - PostgreSQL, or a SQLite file that Alembic manages: run the migrations once per process
+      (so a new migration never clashes with tables created by hand).
+    - A brand-new SQLite file: create the tables directly (fast; tests and the cloud demo).
     """
     global _migrated
     # Import all models to ensure they are registered with Base.metadata
     from backend.database import models  # noqa: F401
 
-    if settings.is_sqlite:
-        Base.metadata.create_all(bind=engine)
+    if settings.is_sqlite and not _is_alembic_managed():
+        Base.metadata.create_all(bind=engine)  # brand-new SQLite file (tests, cloud demo)
         return
     if _migrated:
         return

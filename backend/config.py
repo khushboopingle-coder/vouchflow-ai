@@ -54,6 +54,12 @@ class Settings(BaseSettings):
     # Empty -> a random key per process is used (tokens stop working after a restart).
     VOUCHFLOW_SECRET_KEY: str = ""
 
+    # Phase 4: ingest API for automation (n8n)
+    # Public address of the dashboard, used in the links the API returns (no trailing slash).
+    DASHBOARD_URL: str = "http://localhost:8501"
+    # Calls per minute allowed per API key on POST /api/invoices/ingest (each runs extraction + agent)
+    INGEST_RATE_LIMIT_PER_MINUTE: int = 20
+
     # 3-Way Matching Tolerance Settings
     # Differences up to this amount (in Rupees) are accepted as valid commercial rounding
     ROUNDING_TOLERANCE_RS: float = 1.00

@@ -1,5 +1,7 @@
 {
   "date": "2026-11-05",
   "exhausted_models": [],
-  "unavailable_models": []
+  "unavailable_models": [
+    "gemini-2.5-flash-lite"
+  ]
 }

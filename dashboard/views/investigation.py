@@ -42,8 +42,12 @@ options = {
 }
 pick_col, button_col = st.columns([4, 1])
 with pick_col:
+    # A link from an alert (n8n) opens this page with ?invoice=<id>; ignored if it is not in this workspace
+    wanted = st.query_params.get("invoice")
+    ids = list(options.keys())
+    start = ids.index(int(wanted)) if wanted and str(wanted).isdigit() and int(wanted) in ids else 0
     invoice_id = st.selectbox(
-        "Invoice", list(options.keys()), format_func=lambda i: options[i], key="investigation_invoice"
+        "Invoice", ids, index=start, format_func=lambda i: options[i], key="investigation_invoice"
     )
 with button_col:
     st.write("")

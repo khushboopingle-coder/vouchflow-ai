@@ -13,7 +13,7 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 APP = str(Path(__file__).resolve().parent.parent / "dashboard" / "app.py")
-VIEWS = ["views/investigation.py", "views/approvals.py", "views/evals.py", "views/data.py"]
+VIEWS = ["views/investigation.py", "views/approvals.py", "views/evals.py", "views/data.py", "views/settings.py"]
 
 
 def _has_brand(at) -> bool:
