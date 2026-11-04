@@ -1,0 +1,10 @@
+# VouchFlow AI - Streamlit settings (read locally and on Streamlit Community Cloud)
+# Light theme so tables and widgets match the page.
+# Colours are the dashboard palette in dashboard/ui_common.py (GLOBAL_CSS).
+
+[theme]
+base = "light"
+primaryColor = "#557b68"              # --green  (buttons, links, focus)
+backgroundColor = "#f5f4ef"           # --bg     (page)
+secondaryBackgroundColor = "#eeefe8"  # sidebar / widget background
+textColor = "#26372f"                 # --text

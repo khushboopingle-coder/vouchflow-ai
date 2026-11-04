@@ -35,9 +35,12 @@ against purchase orders (PO), goods received notes (GRN) and supplier contracts
   no LLM), `contract_finder.py` (RAG), `embeddings.py`
 - `backend/agent/` — `graph.py` (LangGraph nodes), `state.py`, `tools.py`
 - `backend/guardrails/` — `grounding.py`, `permissions.py`, `injection.py`
-- `dashboard/app.py` — Streamlit main ledger page (left unchanged in Phase 8)
+- `dashboard/app.py` — entry point / router (Streamlit Cloud main file): `st.navigation`
+  (hidden) + own sidebar menu via `st.page_link`; Home, Investigation, Approvals, Evals
+- `dashboard/home.py` — Home page: KPI cards, invoice ledger, invoice inspection
+- `.streamlit/config.toml` — light theme (colours = palette in `ui_common.GLOBAL_CSS`)
 - `dashboard/pages/` — `1_Investigation.py`, `2_Approvals.py`, `3_Evals.py` (Evals is read-only)
-- `dashboard/ui_common.py` — shared helpers: API first, falls back to services on local DB
+- `dashboard/ui_common.py` — shared helpers: API first, falls back to services on local DB; `GLOBAL_CSS`, sidebar brand + "Demo data" badge
 - `dashboard/demo_setup.py` — demo start-up (Streamlit Cloud): copies Gemini secrets to env,
   seeds an EMPTY database from `mock_data.json` (invoices 1–50), checks + investigates
   6 demo invoices (extraction only if a key exists). Never runs the generator scripts
