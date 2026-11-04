@@ -13,6 +13,10 @@ pydantic==2.14.2
 pydantic-settings==2.16.2
 python-dotenv==1.2.2
 
+# PostgreSQL (Neon) driver and database migrations
+psycopg[binary]==3.3.8
+alembic==1.20.1
+
 # Synthetic Data Generation and PDF Creation
 faker==40.44.0
 reportlab==5.1.0

@@ -13,7 +13,10 @@ against purchase orders (PO), goods received notes (GRN) and supplier contracts
 - Keep `python -m pytest -q` passing.
 
 ## Tech
-- Python 3.14, FastAPI + SQLAlchemy 2 + Pydantic v2, SQLite (`vouchflow.db`, gitignored)
+- Python 3.14, FastAPI + SQLAlchemy 2 + Pydantic v2
+- Database: PostgreSQL on Neon via `DATABASE_URL` in `.env` (secret: never print, never
+  commit). Missing -> local SQLite `vouchflow.db` (gitignored). Driver: psycopg v3;
+  `settings.database_url` adds `+psycopg`. Migrations: Alembic (`alembic.ini`, `migrations/`)
 - Streamlit dashboard
 - Gemini via `google-genai` directly (automatic model switching via `GEMINI_MODEL_LIST`)
 - Contract search (RAG): LangChain `Chroma` wrapper (from `langchain_community`) + ChromaDB,
@@ -24,7 +27,9 @@ against purchase orders (PO), goods received notes (GRN) and supplier contracts
 - `backend/main.py` — FastAPI routes: health, invoices list/detail/upload, extract, check,
   audit-logs, investigate/investigation, and Phase 8 approvals:
   `POST /invoices/{id}/decision`, `GET /approvals/queue`, `GET /approvals/decisions`
-- `backend/config.py` — settings from `.env`
+- `backend/config.py` — settings from `.env`; `database_url`, `is_sqlite`, `database_kind`
+- `backend/database/db.py` — engine; `init_db()`: SQLite -> create_all, PostgreSQL -> Alembic upgrade
+- `migrations/versions/0001_initial_schema.py` — all 13 tables (portable SQLite/PostgreSQL)
 - `backend/database/` — `db.py` (engine/session), `models.py` (tables), `schemas.py` (Pydantic)
 - `backend/services/invoice_service.py` — business logic + audit logging
 - `backend/services/approval_service.py` — HUMAN approve/reject rules: software names
@@ -60,7 +65,8 @@ against purchase orders (PO), goods received notes (GRN) and supplier contracts
 ```
 pip install -r requirements.txt
 python scripts/generate_data.py          # fake invoices, contracts, ground truth
-python scripts/seed_db.py                # fill database (safe to re-run)
+python -m alembic upgrade head           # create/update tables (uses DATABASE_URL)
+python scripts/seed_db.py --demo-runs    # fill DB + 6 demo investigations (--force to wipe PG)
 python -m uvicorn backend.main:app --reload   # API at http://127.0.0.1:8000
 streamlit run dashboard/app.py           # dashboard
 python -m pytest -q                      # tests
@@ -83,6 +89,12 @@ python scripts/run_agent_eval.py         #        eval_hard_v2
   to `langchain_chroma` package.
 
 ## Notes
+- `.env` has TWO `DATABASE_URL` lines (line 2 SQLite, line 8 Neon); the last one wins -> Neon.
+- Tests are forced to SQLite by `tests/conftest.py` (set `TEST_DATABASE_URL` to override).
+- After changing models: `python -m alembic revision --autogenerate -m "..."`, review it,
+  `python -m alembic upgrade head`; `tests/test_database_config.py` runs `alembic check`.
+- Local `vouchflow.db` is stamped at Alembic head (has an `alembic_version` table).
+- Neon holds 50 invoices + 6 demo investigations (seeded without the Gemini key).
 - Tests use the real `vouchflow.db`; tests that create rows should delete them afterwards
   (see `tests/test_approvals.py`). A test run rewrites `data/chroma_db/*.bin` and the date in
   `data/evaluation/model_state.json` — this is normal.

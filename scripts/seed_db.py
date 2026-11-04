@@ -1,7 +1,7 @@
 """
 Database Seeder for VouchFlow AI
 ================================
-Populates the database with:
+Populates the database (SQLite or PostgreSQL, chosen by DATABASE_URL in .env) with:
 - 8 Suppliers
 - Master Contracts for each supplier and product
 - 50 Purchase Orders (with line items)
@@ -9,23 +9,33 @@ Populates the database with:
 - 50 Invoices (with line items and assigned initial statuses)
 - Initial system audit log
 
-Idempotent: Can be run multiple times safely by wiping and refreshing tables.
+Usage:
+    python scripts/seed_db.py                 # fill an empty database
+    python scripts/seed_db.py --demo-runs     # ... and check + investigate 6 demo invoices
+    python scripts/seed_db.py --force         # wipe a PostgreSQL database that has data
+
+Wipes and refills the tables each time. On SQLite this is always allowed (local file).
+On PostgreSQL it refuses to wipe existing invoices unless --force is given.
+The database link is never printed.
 """
 
-import os
+import argparse
 import sys
 import json
 from pathlib import Path
-from datetime import datetime, date
+from datetime import datetime
 
 # Ensure project root is in sys.path so 'backend' can be imported
 BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from backend.database.db import engine, SessionLocal, init_db, Base
+from sqlalchemy import text  # noqa: E402
 
-from backend.database.models import (
+from backend.config import settings  # noqa: E402
+from backend.database.db import engine, SessionLocal, init_db, Base  # noqa: E402
+
+from backend.database.models import (  # noqa: E402
     Supplier,
     Contract,
     PurchaseOrder,
@@ -34,18 +44,58 @@ from backend.database.models import (
     GRNItem,
     Invoice,
     InvoiceItem,
+    InvoiceExtraction,
+    InvoiceCheck,
+    InvoiceInvestigation,
+    InvoiceDecision,
     AuditLog
 )
 
-BASE_DIR = Path(__file__).resolve().parent.parent
 MOCK_DATA_PATH = BASE_DIR / "data" / "evaluation" / "mock_data.json"
 
+# Children first: PostgreSQL enforces foreign keys, so a row can only be deleted
+# after every row that points to it is gone.
+DELETE_ORDER = [
+    InvoiceDecision,
+    InvoiceInvestigation,
+    InvoiceCheck,
+    InvoiceExtraction,
+    AuditLog,
+    InvoiceItem,
+    Invoice,
+    GRNItem,
+    GoodsReceivedNote,
+    POItem,
+    PurchaseOrder,
+    Contract,
+    Supplier,
+]
 
-def seed_database():
-    """Reads generated mock data and populates SQLite/PostgreSQL database."""
-    print("--- Starting Database Seeder ---")
 
-    # Ensure tables exist
+class SeedRefused(RuntimeError):
+    """Raised instead of wiping a non-SQLite database that already has invoices."""
+
+
+def reset_id_counters(db) -> None:
+    """PostgreSQL only: the seeder inserts fixed IDs, which does not move the tables' ID
+    counters (sequences). Set each counter past the highest ID so new rows don't collide."""
+    if engine.dialect.name != "postgresql":
+        return
+    for table in Base.metadata.sorted_tables:
+        if "id" not in table.columns:
+            continue
+        db.execute(text(
+            f"SELECT setval(pg_get_serial_sequence('{table.name}', 'id'), "
+            f"COALESCE((SELECT MAX(id) FROM {table.name}), 0) + 1, false)"
+        ))
+    db.commit()
+
+
+def seed_database(force: bool = False, demo_runs: bool = False):
+    """Reads generated mock data and populates the SQLite/PostgreSQL database."""
+    print(f"--- Starting Database Seeder ({settings.database_kind}) ---")
+
+    # Ensure tables exist (SQLite: create_all, PostgreSQL: Alembic migrations)
     init_db()
 
     # If mock_data.json doesn't exist yet, run generator first
@@ -60,17 +110,17 @@ def seed_database():
 
     db = SessionLocal()
     try:
+        existing = db.query(Invoice).count()
+        if existing and not settings.is_sqlite and not force:
+            raise SeedRefused(
+                f"The {settings.database_kind} database already has {existing} invoices. "
+                "Seeding would delete them. Run again with --force if that is what you want."
+            )
+
         # Clear existing records in proper dependency order
         print("Clearing existing database records for a fresh seed...")
-        db.query(AuditLog).delete()
-        db.query(InvoiceItem).delete()
-        db.query(Invoice).delete()
-        db.query(GRNItem).delete()
-        db.query(GoodsReceivedNote).delete()
-        db.query(POItem).delete()
-        db.query(PurchaseOrder).delete()
-        db.query(Contract).delete()
-        db.query(Supplier).delete()
+        for model in DELETE_ORDER:
+            db.query(model).delete()
         db.commit()
 
         # 1. Insert Suppliers
@@ -192,6 +242,9 @@ def seed_database():
         db.add(audit_log)
         db.commit()
 
+        # 7. PostgreSQL: move the ID counters past the fixed IDs we inserted
+        reset_id_counters(db)
+
         # Summary count check
         print("\n--- Seeding Successfully Finished ---")
         print(f"Suppliers:            {db.query(Supplier).count()}")
@@ -204,13 +257,40 @@ def seed_database():
         print(f"Invoice Line Items:   {db.query(InvoiceItem).count()}")
         print(f"Audit Logs:           {db.query(AuditLog).count()}")
 
+    except SeedRefused:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
-        print(f"Error during seeding: {e}")
+        # Only the error type: database error texts can contain host and user names.
+        print(f"Error during seeding: {type(e).__name__}")
         raise
     finally:
         db.close()
 
+    if demo_runs:
+        print("\n--- Running the demo invoices (check + investigate) ---")
+        sys.path.insert(0, str(BASE_DIR / "dashboard"))
+        from demo_setup import run_demo_invoices
+
+        runs = run_demo_invoices()
+        print(f"Demo invoices: {runs['demo_invoice_ids']} | errors: {runs['errors'] or 'none'}")
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description="Fill the VouchFlow database with fake demo data.")
+    parser.add_argument("--force", action="store_true",
+                        help="allow wiping a PostgreSQL database that already has invoices")
+    parser.add_argument("--demo-runs", action="store_true",
+                        help="also check + investigate the 6 demo invoices")
+    args = parser.parse_args(argv)
+    try:
+        seed_database(force=args.force, demo_runs=args.demo_runs)
+    except SeedRefused as refused:
+        print(f"Stopped: {refused}")
+        return 1
+    return 0
+
 
 if __name__ == "__main__":
-    seed_database()
+    sys.exit(main())

@@ -119,27 +119,40 @@ def prepare_demo_data(log: Callable[[str], None] = print) -> Dict:
         seed_database()
     result["seeded"] = True
 
+    runs = run_demo_invoices(log=log)
+    result["demo_invoice_ids"] = runs["demo_invoice_ids"]
+    result["errors"] = runs["errors"]
+    return result
+
+
+def run_demo_invoices(log: Callable[[str], None] = print) -> Dict:
+    """Checks and investigates the demo invoices (1 clean + one per mistake type), so the
+    Investigation and Approvals pages have content. Used by the cloud demo start-up and by
+    `python scripts/seed_db.py --demo-runs` (works on SQLite and PostgreSQL).
+    Extraction (Gemini) only runs when a key exists. Nothing is ever approved."""
+    from backend.config import settings
     from backend.database.db import SessionLocal
     from backend.services import invoice_service
 
+    extraction_used = bool(settings.GEMINI_API_KEY)
     ids = pick_demo_invoice_ids()
-    result["demo_invoice_ids"] = ids
+    errors: List[str] = []
     db = SessionLocal()
     try:
         for invoice_id in ids:
             try:
-                if result["extraction_used"]:
+                if extraction_used:
                     invoice_service.extract_invoice_data(db=db, invoice_id=invoice_id, who=DEMO_WHO)
                 invoice_service.check_invoice_matching(db=db, invoice_id=invoice_id, who=DEMO_WHO)
                 invoice_service.investigate_invoice(db=db, invoice_id=invoice_id, who=DEMO_WHO)
                 log(f"Demo setup: invoice {invoice_id} checked and investigated.")
             except Exception as exc:  # one bad invoice must not stop the demo
                 db.rollback()
-                result["errors"].append(f"invoice {invoice_id}: {type(exc).__name__}")
+                errors.append(f"invoice {invoice_id}: {type(exc).__name__}")
                 log(f"Demo setup: invoice {invoice_id} failed ({type(exc).__name__}).")
     finally:
         db.close()
-    return result
+    return {"demo_invoice_ids": ids, "extraction_used": extraction_used, "errors": errors}
 
 
 # ---------------------------------------------------------------------
