@@ -1,7 +1,8 @@
 # VouchFlow AI — Progress
 
 Follows `VOUCHFLOW_MASTER_PLAN.md` (Phases 2–7). One commit per phase.
-**Continue from:** Phase 7 (README, results, screenshot checklist, demo script). Phases 2 to 6 are done and committed.
+**Continue from:** nothing left to build. Phases 2 to 7 are done and committed; the Phase 6 and Phase 7 commits still need `git push origin main`.
+
 
 ## Phase 1 — PostgreSQL (Neon) ✅ (commit `f22fdf6`)
 - `DATABASE_URL` in `.env` → Neon; missing → local SQLite. psycopg v3, Alembic migrations.
@@ -256,8 +257,18 @@ your credential in the node and save. Test the **webhook workflow first**; it ne
 they are checked by tests only for structure and safety. Render and Streamlit Cloud were not touched (they need your accounts).
 Please run `docker compose up --build` once and tell me what breaks.
 
+## Phase 7 - README, evals and portfolio polish ✅
+- `README.md` rewritten: what it does, **Mermaid architecture diagram**, the full flow (email -> n8n -> API -> agent -> alert ->
+  human approval) as a sequence diagram, how to run locally, how to use it, tech stack, **Results table with the real numbers**,
+  **Limitations**, **Security**, **Next steps**, project layout.
+- **Honest numbers:** invoice reader = 44 of 44 real Gemini reads correct (the saved file's "47/48" mixes in 3 mock rows and 1 unread
+  invoice); matcher 50/50 + 40/40 + 30/30; contract search 15/15; agent 20/20 with **template** explanations only (150 claims, 0 ungrounded).
+  Limitations say plainly: generated data, same author for code and tests, free-tier AI limits, not tested on many real invoices.
+- `docs/SCREENSHOT_CHECKLIST.md`: screenshots that really exist in the app, plus the **2-minute demo script**.
+
 ## What is left (for you)
-1. (Phase 7 will add the README and the screenshot checklist.)
+0. **Push to GitHub:** the Phase 6 and Phase 7 commits exist only on this computer (the push was blocked). Run `git push origin main` when you are happy.
+1. **Take the screenshots** (checklist) and record the demo; add the best images to the README.
 2. **Run `docker compose up --build`** once (Docker was not available here) and the **webhook workflow in n8n** (see `n8n/README.md`).
 3. **Deploy** following `DEPLOY.md` (Render for the API, Streamlit Cloud for the dashboard): creating accounts and typing secrets is yours to do.
 4. Optional: put your Gemini key in the API's environment to read invoices by AI; re-run the evaluation scripts if you change the matcher.
@@ -270,6 +281,6 @@ Please run `docker compose up --build` once and tell me what breaks.
 - [x] Ingest API works with an API key; wrong key gives 401
 - [x] n8n workflow files and README are in the repo (import into real n8n still to be tried by you)
 - [x] Docker and DEPLOY.md are ready (Docker itself not built here)
-- [x] pytest passes (285 tests, about 2 minutes: pytest reports 1:56; Gemini always mocked)
-- [ ] No secrets in git (scanned before every commit; the final scan of history is in Phase 7)
-- [ ] README has real numbers and honest limits (Phase 7)
+- [x] pytest passes (285 tests, about 2 minutes: pytest reports 1:56; Gemini always mocked; the real database is never touched)
+- [x] No secrets in git: all 16 commits scanned for key/token/link patterns, and for the literal Gemini key and Neon link/password from `.env` (none found); no `.env`, secrets file, database or upload is tracked
+- [x] README has real numbers and honest limits
