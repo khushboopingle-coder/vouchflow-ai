@@ -1,5 +1,12 @@
 # VouchFlow AI
 
+## Live demo
+
+- **App (dashboard):** https://vouchflow-ai-app.streamlit.app
+- **API docs:** https://vouchflow-api.onrender.com/docs
+
+The free servers sleep when idle, so the first load can take about a minute.
+
 **An AI assistant for accounts-payable teams.** It reads supplier invoices, checks each one against the
 **purchase order**, the **goods received note** and the **supplier contract** ("3-way matching"), explains what is
 wrong with evidence and quotes, and tells a person what to do next. **A human always approves.** Nothing is ever

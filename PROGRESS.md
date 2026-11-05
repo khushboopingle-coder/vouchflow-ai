@@ -1,5 +1,12 @@
 # VouchFlow AI — Progress
 
+## Live demo
+
+- **App (dashboard):** https://vouchflow-ai-app.streamlit.app
+- **API docs:** https://vouchflow-api.onrender.com/docs
+
+The free servers sleep when idle, so the first load can take about a minute.
+
 Follows `VOUCHFLOW_MASTER_PLAN.md` (Phases 2–7). One commit per phase.
 **Continue from:** nothing left to build. Phases 2 to 7 are done and committed; the Phase 6 and Phase 7 commits still need `git push origin main`.
 

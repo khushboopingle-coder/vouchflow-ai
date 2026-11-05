@@ -1,5 +1,12 @@
 # VouchFlow AI — Deployment Guide
 
+## Live demo
+
+- **App (dashboard):** https://vouchflow-ai-app.streamlit.app
+- **API docs:** https://vouchflow-api.onrender.com/docs
+
+The free servers sleep when idle, so the first load can take about a minute.
+
 This guide explains how to deploy VouchFlow AI to production across **Neon PostgreSQL**, **Render** (FastAPI backend), **Streamlit Community Cloud** (Dashboard frontend), and **n8n** (Automated workflow orchestration).
 
 ---

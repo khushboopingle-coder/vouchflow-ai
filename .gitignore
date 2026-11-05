@@ -38,3 +38,4 @@ Thumbs.db
 
 # Users' own uploads and per-workspace contract indexes (Phase 3) - never commit
 data/workspaces/
+.streamlit/secrets.toml.ready
