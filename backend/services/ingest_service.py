@@ -11,8 +11,9 @@ dashboard. Extraction needs a Gemini key on the server; without one the invoice 
 saved, matched and investigated, but lands in "needs_review" (extraction incomplete).
 """
 
+import logging
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, NamedTuple, Optional
 
 from sqlalchemy.orm import Session
 
@@ -22,6 +23,13 @@ from backend.database.models import (
 )
 from backend.database.schemas import ExtractedInvoice, IngestResponse, InvoiceSummary
 from backend.services import invoice_service, upload_service, workspace_service
+
+logger = logging.getLogger("vouchflow.reader")
+if not logger.handlers and not logging.getLogger().handlers:
+    # no logging set up by the host program (e.g. Streamlit): print warnings to the terminal
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("[%(name)s] %(levelname)s: %(message)s"))
+    logger.addHandler(_handler)
 
 DATE_FORMATS = ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d %b %Y", "%d %B %Y", "%b %d, %Y", "%B %d, %Y")
 HUMAN_APPROVAL_NOTE = "A person must review and approve this invoice in the dashboard. Nothing was approved or paid."
@@ -155,22 +163,46 @@ def build_summary(db: Session, workspace_id: int, invoice_id: int) -> InvoiceSum
     )
 
 
+class ReadOutcome(NamedTuple):
+    """Result of trying to read one saved invoice. `reason` explains a failure in plain words."""
+    ok: bool
+    confidence: float = 0.0
+    reason: str = ""
+
+
+def read_saved_invoice(db: Session, workspace_id: int, invoice_id: int, who: str = "api_user") -> ReadOutcome:
+    """
+    Reads a saved invoice with the AI reader and fills the invoice row. NEVER raises and NEVER
+    changes the status (a failed read simply leaves the invoice in 'needs_review' for a person).
+    On failure the reason is returned AND logged (terminal), so it is never silent.
+    """
+    try:
+        extracted = invoice_service.extract_invoice_data(db=db, invoice_id=invoice_id,
+                                                         workspace_id=workspace_id, who=who)
+        if not extracted.is_success:
+            reason = (extracted.error_message or "the reader returned no data").strip()
+            logger.warning("Could not read invoice %s (workspace %s): %s", invoice_id, workspace_id, reason)
+            return ReadOutcome(False, float(extracted.confidence or 0.0), reason)
+        invoice = db.query(Invoice).filter(Invoice.id == invoice_id).one()
+        apply_extraction_to_invoice(db, invoice, extracted)
+        return ReadOutcome(True, float(extracted.confidence or 0.0))
+    except Exception as exc:  # includes HTTPException (e.g. file missing)
+        db.rollback()
+        reason = str(getattr(exc, "detail", None) or exc) or type(exc).__name__
+        logger.warning("Could not read invoice %s (workspace %s): %s: %s",
+                       invoice_id, workspace_id, type(exc).__name__, reason)
+        return ReadOutcome(False, 0.0, reason)
+
+
 def ingest_invoice(db: Session, workspace_id: int, filename: str, data: bytes,
                    who: str = "api_key") -> IngestResponse:
     """The whole pipeline for one file. Raises upload_service.UploadError for a bad file."""
     saved = upload_service.save_invoice_file(db, workspace_id, filename, data, who=who)
     invoice_id = saved.invoice_id
 
-    extraction_ok, confidence = False, 0.0
-    try:
-        extracted = invoice_service.extract_invoice_data(db=db, invoice_id=invoice_id,
-                                                         workspace_id=workspace_id, who=who)
-        extraction_ok, confidence = bool(extracted.is_success), float(extracted.confidence or 0.0)
-        if extraction_ok:
-            invoice = db.query(Invoice).filter(Invoice.id == invoice_id).one()
-            apply_extraction_to_invoice(db, invoice, extracted)
-    except Exception:
-        db.rollback()  # extraction trouble must not stop the check: the matcher flags it for review
+    # extraction trouble must not stop the check: the matcher flags the invoice for review
+    outcome = read_saved_invoice(db, workspace_id, invoice_id, who=who)
+    extraction_ok, confidence = outcome.ok, outcome.confidence
 
     invoice_service.check_invoice_matching(db=db, invoice_id=invoice_id, workspace_id=workspace_id, who=who)
     invoice_service.investigate_invoice(db=db, invoice_id=invoice_id, workspace_id=workspace_id, who=who,
@@ -189,6 +221,7 @@ def ingest_invoice(db: Session, workspace_id: int, filename: str, data: bytes,
         recommended_action=summary.recommended_action or "needs_human_review",
         extraction_ok=extraction_ok,
         extraction_confidence=confidence,
+        extraction_error=None if extraction_ok else (outcome.reason or None),
         dashboard_link=summary.dashboard_link,
         human_approval_required=True,
         message=HUMAN_APPROVAL_NOTE,

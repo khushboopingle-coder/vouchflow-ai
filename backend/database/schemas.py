@@ -410,4 +410,5 @@ class IngestResponse(InvoiceSummary):
     """Answer of POST /api/invoices/ingest."""
     extraction_ok: bool = Field(..., description="False when the invoice could not be read (no AI key / unreadable)")
     extraction_confidence: float = 0.0
+    extraction_error: Optional[str] = Field(None, description="Why the invoice could not be read (None when it was read)")
     message: str

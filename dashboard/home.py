@@ -5,6 +5,7 @@ Opened through the router in dashboard/app.py (st.navigation, title "Home").
 All colours come from ui_common.PALETTE (via CSS classes); none are written here.
 """
 
+import hashlib
 import html
 import io
 import sys
@@ -42,12 +43,24 @@ def fetch_single_invoice(invoice_id):
 
 
 def upload_invoice_file(file_obj):
-    """Save an uploaded invoice into this workspace (same rules as POST /invoices/upload)."""
-    from backend.services import invoice_service
+    """Save an uploaded invoice into this workspace (same rules as POST /invoices/upload), then
+    try to READ it with the AI reader. Returns (saved, info). `info["read_ok"]` / `info["read_reason"]`
+    say whether reading worked; a failed read never loses the invoice (it stays in 'needs review')."""
+    from backend.services import ingest_service, invoice_service
 
     upload = SimpleNamespace(filename=file_obj.name, file=io.BytesIO(file_obj.getvalue()))
-    return ui.run_db(lambda db: invoice_service.save_uploaded_invoice(
+    saved, info = ui.run_db(lambda db: invoice_service.save_uploaded_invoice(
         db=db, file=upload, workspace_id=WS, who=ACCOUNT["email"]))
+    if not saved:
+        return False, info
+
+    def read(db):
+        outcome = ingest_service.read_saved_invoice(db, WS, info["invoice_id"], who=ACCOUNT["email"])
+        return {"read_ok": outcome.ok, "read_reason": outcome.reason}
+
+    ok, result = ui.run_db(read)
+    info.update(result if ok else {"read_ok": False, "read_reason": result.get("detail", "unknown error")})
+    return True, info
 
 
 money = ui.money
@@ -96,24 +109,47 @@ with st.sidebar:
     st.markdown("---")
     st.markdown('<div class="sidebar-label">Add to your ledger</div>', unsafe_allow_html=True)
     st.markdown("**Quick invoice upload**")
+    # Result of the last upload (shown after the page reloads, because the uploader is cleared)
+    notice = st.session_state.pop("upload_notice", None)
+    if notice:
+        if notice["kind"] == "success":
+            st.success(notice["text"])
+        else:
+            st.warning(notice["text"])
+
+    # A new key after every submit empties the uploader, so one file cannot be saved twice
     uploaded_file = st.file_uploader(
         "PDF or image",
         type=["pdf", "png", "jpg", "jpeg"],
         help="Supported formats: PDF, PNG and JPG.",
         label_visibility="collapsed",
+        key=f"quick_upload_{st.session_state.get('upload_round', 0)}",
     )
     if uploaded_file is not None:
         st.caption(f"Selected: {uploaded_file.name}")
-        if st.button("↑  Submit invoice", type="primary", width="stretch"):
-            with st.spinner("Uploading invoice..."):
+        file_hash = hashlib.sha256(uploaded_file.getvalue()).hexdigest()
+        submitted = st.session_state.setdefault("submitted_hashes", set())
+        if file_hash in submitted:
+            st.info("This file was already submitted in this session.")
+        elif st.button("↑  Submit invoice", type="primary", width="stretch"):
+            submitted.add(file_hash)  # marked BEFORE saving: a second click cannot save it again
+            with st.spinner("Saving and reading the invoice (this can take up to a minute)..."):
                 success, response = upload_invoice_file(uploaded_file)
-            if success:
-                st.success(
-                    f"Invoice received · ID {response.get('invoice_id', 'assigned')}"
-                )
-                st.rerun()
-            else:
+            if not success:
+                submitted.discard(file_hash)  # nothing was saved, so the user may try again
                 st.error(response.get("detail", "Upload failed."))
+            else:
+                inv_id = response.get("invoice_id", "assigned")
+                if response.get("read_ok"):
+                    st.session_state["upload_notice"] = {
+                        "kind": "success", "text": f"Invoice read and saved · ID {inv_id}"}
+                else:
+                    st.session_state["upload_notice"] = {
+                        "kind": "warning",
+                        "text": (f"Could not read this invoice, saved for manual review (ID {inv_id}). "
+                                 f"Reason: {response.get('read_reason') or 'unknown'}")}
+                st.session_state["upload_round"] = st.session_state.get("upload_round", 0) + 1
+                st.rerun()
 
     st.markdown("---")
     st.markdown(

@@ -442,10 +442,14 @@ class InvoiceReader:
                         self.switch_to_next_model(reason="api error")
                         break
 
-        # If loop exited and all models were exhausted
+        # If loop exited, no model could read the invoice. Say the REAL last reason, not always "daily limit".
+        if last_error and not is_daily_limit_error(last_error):
+            message = f"No AI model could read this invoice. Last error: {last_error[:300]}"
+        else:
+            message = "All models reached their daily limit. Run again tomorrow with --resume"
         return ExtractedInvoice(
             is_success=False,
-            error_message="All models reached their daily limit. Run again tomorrow with --resume",
+            error_message=message,
             confidence=0.0,
             missing_fields=["all"],
             model_name=None
