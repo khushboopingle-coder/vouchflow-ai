@@ -33,7 +33,12 @@ if str(BASE_DIR) not in sys.path:
 
 MOCK_DATA_PATH = BASE_DIR / "data" / "evaluation" / "mock_data.json"
 GROUND_TRUTH_PATH = BASE_DIR / "data" / "evaluation" / "ground_truth.csv"
-SECRET_KEYS = ("GEMINI_API_KEY", "GEMINI_MODEL", "GEMINI_MODEL_LIST")
+# Names read from Streamlit Cloud "Secrets" (.streamlit/secrets.toml) and copied into the environment.
+# DATABASE_URL must be copied BEFORE the backend is imported (the engine reads it once).
+SECRET_KEYS = (
+    "DATABASE_URL", "VOUCHFLOW_SECRET_KEY", "GEMINI_API_KEY", "GEMINI_MODEL", "GEMINI_MODEL_LIST",
+    "DASHBOARD_URL", "ENVIRONMENT", "DATA_DIR",
+)
 # Used only if ground_truth.csv cannot be read: 1 clean + one of each mistake type
 FALLBACK_DEMO_IDS = [1, 19, 15, 21, 6, 24]
 DEMO_WHO = "demo_setup"

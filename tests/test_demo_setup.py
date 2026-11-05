@@ -1,8 +1,10 @@
 """
 Demo start-up tests (Streamlit Community Cloud mode).
 
-The start-up runs in a separate Python process on a TEMPORARY database, with
-no Gemini key, so the real vouchflow.db is never touched. Checks:
+The start-up runs on a TEMPORARY database (the app's database connection is swapped for the
+duration of this module and restored afterwards), with no Gemini key, so the real vouchflow.db
+is never touched. A safety check aborts BEFORE anything is seeded if the swap did not work.
+Checks:
 - an empty database is filled from mock_data.json (50 invoices)
 - 6 demo invoices are checked and investigated, without extraction (no key)
 - the agent writes the template explanation (LLM not used)
@@ -12,49 +14,50 @@ no Gemini key, so the real vouchflow.db is never touched. Checks:
 
 import hashlib
 import json
-import os
 import sqlite3
-import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+from sqlalchemy import create_engine
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 EVAL_DIR = BASE_DIR / "data" / "evaluation"
 PROTECTED = sorted(EVAL_DIR.glob("*ground_truth*.csv")) + [EVAL_DIR / "mock_data.json"]
-
-RUN_SNIPPET = (
-    "import json; from dashboard.demo_setup import prepare_demo_data; "
-    "print('RESULT=' + json.dumps(prepare_demo_data(log=lambda m: None)))"
-)
 
 
 def _hashes():
     return {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in PROTECTED}
 
 
-def _run_setup(db_path: Path) -> dict:
-    env = dict(os.environ)
-    env["DATABASE_URL"] = f"sqlite:///{db_path.as_posix()}"
-    env["GEMINI_API_KEY"] = ""  # simulate Streamlit Cloud with no key (overrides .env)
-    env["VOUCHFLOW_DISABLE_LLM"] = "1"
-    proc = subprocess.run(
-        [sys.executable, "-c", RUN_SNIPPET],
-        cwd=str(BASE_DIR), env=env, capture_output=True, text=True, timeout=600,
-    )
-    assert proc.returncode == 0, proc.stderr[-2000:]
-    line = next(l for l in proc.stdout.splitlines() if l.startswith("RESULT="))
-    return json.loads(line[len("RESULT="):])
-
-
 @pytest.fixture(scope="module")
 def demo_run(tmp_path_factory):
+    import backend.database.db as dbm
+
+    sys.path.insert(0, str(BASE_DIR))
+    from dashboard.demo_setup import prepare_demo_data
+
     db_path = tmp_path_factory.mktemp("demo") / "demo.db"
-    before = _hashes()
-    first = _run_setup(db_path)
-    second = _run_setup(db_path)
-    return {"db": db_path, "first": first, "second": second, "before": before, "after": _hashes()}
+    temp_engine = create_engine(f"sqlite:///{db_path.as_posix()}", connect_args={"check_same_thread": False})
+    real_engine = dbm.engine
+    dbm.engine = temp_engine                       # init_db() and friends read this module attribute
+    dbm.SessionLocal.configure(bind=temp_engine)   # every session opened from now on uses the temp file
+    try:
+        probe = dbm.SessionLocal()
+        try:
+            # SAFETY: never seed anything unless we are really on the temporary database
+            assert str(probe.get_bind().url).endswith("demo.db"), "database swap failed - refusing to seed"
+        finally:
+            probe.close()
+
+        before = _hashes()
+        first = prepare_demo_data(log=lambda m: None)
+        second = prepare_demo_data(log=lambda m: None)   # same process, same database: must do nothing
+        yield {"db": db_path, "first": first, "second": second, "before": before, "after": _hashes()}
+    finally:
+        dbm.engine = real_engine
+        dbm.SessionLocal.configure(bind=real_engine)
+        temp_engine.dispose()
 
 
 def test_pick_demo_invoices_covers_every_mistake_type():

@@ -270,14 +270,11 @@ def test_missing_contract_source_invoice_56(db_session):
 # 6. Benchmark Evaluation End-to-End with Mocked LLM
 # ---------------------------------------------------------------------------
 
-def test_run_agent_evaluation_end_to_end(tmp_path):
-    """
-    Runs the full 20-invoice benchmark evaluation with mocked LLM:
-    1. Produces 20 evaluation rows.
-    2. Achieves 100% action accuracy, tool correctness, citation correctness, and safety.
-    3. Saves itemized agent_results.csv with all required columns.
-    """
-    test_csv = tmp_path / "test_agent_results.csv"
+@pytest.fixture(scope="module")
+def evaluation_run(tmp_path_factory):
+    """The full 20-invoice benchmark, run ONCE and shared by the tests below (it is the slowest
+    thing in the suite). The LLM is mocked: Gemini is never called."""
+    csv_path = tmp_path_factory.mktemp("agent_eval") / "test_agent_results.csv"
 
     mock_llm_text = (
         "The invoice was thoroughly reviewed against Purchase Order records and physical Goods Received Notes. "
@@ -286,7 +283,18 @@ def test_run_agent_evaluation_end_to_end(tmp_path):
     )
 
     with patch("backend.agent.graph._call_llm_for_explanation", return_value=mock_llm_text):
-        df_results = run_agent_evaluation(use_llm=False, output_csv=test_csv)
+        df_results = run_agent_evaluation(use_llm=False, output_csv=csv_path)
+    return df_results, csv_path
+
+
+def test_run_agent_evaluation_end_to_end(evaluation_run):
+    """
+    The full 20-invoice benchmark evaluation with mocked LLM:
+    1. Produces 20 evaluation rows.
+    2. Achieves 100% action accuracy, tool correctness, citation correctness, and safety.
+    3. Saves itemized agent_results.csv with all required columns.
+    """
+    df_results, test_csv = evaluation_run
 
     assert len(df_results) == 20
     assert test_csv.exists()
@@ -309,14 +317,12 @@ def test_run_agent_evaluation_end_to_end(tmp_path):
 # 7. Credential Protection Test
 # ---------------------------------------------------------------------------
 
-def test_no_api_key_exposure(tmp_path):
+def test_no_api_key_exposure(evaluation_run):
     """
-    Ensures no API key string ever appears in evaluation output CSV or logs.
+    Ensures no API key string ever appears in the evaluation output CSV.
     """
-    test_csv = tmp_path / "cred_check_results.csv"
-    run_agent_evaluation(use_llm=False, output_csv=test_csv)
+    _, test_csv = evaluation_run
 
     content = test_csv.read_text(encoding="utf-8")
     assert "AIza" not in content  # Standard prefix for Google API keys
     assert "api_key" not in content.lower() or "gemini_api_key" not in content.lower()
-

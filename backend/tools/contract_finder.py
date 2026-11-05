@@ -3,6 +3,7 @@ Indexes supplier master contracts using LangChain and ChromaDB.
 Provides clause-level semantic retrieval, relevance gating ('I don't know'),
 and explicit conflict detection across disagreeing contracts/clauses.
 """
+from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 import re
@@ -478,8 +479,9 @@ _NOT_FOUND: Dict[str, Any] = {
     "matched_clause": None,
 }
 # workspace_id -> (vector store or None, supplier names in that index)
-_WS_STORES: Dict[int, Tuple[Optional[Chroma], List[str]]] = {}
+_WS_STORES: "OrderedDict[int, Tuple[Optional[Chroma], List[str]]]" = OrderedDict()
 UPLOADED_CHUNK_CHARS = 900
+MAX_CACHED_WORKSPACE_INDEXES = 20  # least recently used indexes are dropped (rebuilt on demand): bounds memory
 
 
 def _workspace_root(workspace_id: int) -> Path:
@@ -550,6 +552,7 @@ def get_workspace_vector_store(workspace_id: int, include_sample: bool) -> Tuple
     Returns (None, []) when the workspace has no contracts at all."""
     cached = _WS_STORES.get(workspace_id)
     if cached is not None:
+        _WS_STORES.move_to_end(workspace_id)
         return cached
 
     docs: List[Document] = []
@@ -567,7 +570,7 @@ def get_workspace_vector_store(workspace_id: int, include_sample: bool) -> Tuple
     # The index lives in memory (no files): it is small, rebuilt on first use after a restart,
     # and nothing stays locked on disk when a workspace is reset or deleted (Windows).
     name = f"ws_{int(workspace_id)}_contracts"
-    embedding = get_embedding_model()
+    embedding = _workspace_embedding()
     try:  # start from an empty collection, so a rebuild never duplicates chunks
         Chroma(collection_name=name, embedding_function=embedding).delete_collection()
     except Exception:
@@ -575,7 +578,19 @@ def get_workspace_vector_store(workspace_id: int, include_sample: bool) -> Tuple
     store = Chroma.from_documents(documents=docs, embedding=embedding, collection_name=name)
     suppliers = sorted({d.metadata.get("supplier_name", "") for d in docs} - {"", "Unknown Supplier"})
     _WS_STORES[workspace_id] = (store, suppliers)
+    while len(_WS_STORES) > MAX_CACHED_WORKSPACE_INDEXES:
+        old_id, (old_store, _) = _WS_STORES.popitem(last=False)
+        try:  # free the evicted index's memory
+            if old_store is not None:
+                old_store.delete_collection()
+        except Exception:
+            pass
     return _WS_STORES[workspace_id]
+
+
+def _workspace_embedding():
+    """Embedding model for per-workspace indexes (a small hook: tests replace it with a fast fake)."""
+    return get_embedding_model()
 
 
 def invalidate_workspace_store(workspace_id: int) -> None:

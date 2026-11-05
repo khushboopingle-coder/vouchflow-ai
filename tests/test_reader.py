@@ -349,11 +349,13 @@ def test_api_extract_and_get_extraction_endpoints(tmp_path, api_user):
 
     original_client = reader.client
     original_models = reader.models
+    original_delays = reader.retry_delays
     original_idx = reader.current_model_idx
     original_tracker = reader.state_tracker
 
     reader.client = mock_client
     reader.models = ["gemini-3.5-flash-lite"]
+    reader.retry_delays = (0.0, 0.0)
     reader.state_tracker = ModelStateTracker(state_file=tmp_path / "test_api_state.json")
     reader.current_model_idx = 0
 
@@ -398,6 +400,7 @@ def test_api_extract_and_get_extraction_endpoints(tmp_path, api_user):
     finally:
         reader.client = original_client
         reader.models = original_models
+        reader.retry_delays = original_delays
         reader.current_model_idx = original_idx
         reader.state_tracker = original_tracker
         # Clean up test extraction from invoice 2

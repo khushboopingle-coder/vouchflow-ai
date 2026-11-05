@@ -57,18 +57,16 @@ def test_test_run_uses_sqlite():
     assert settings.is_sqlite, "tests must never run against the real PostgreSQL database"
 
 
-def _alembic(db_path: Path, *args: str) -> subprocess.CompletedProcess:
-    env = dict(os.environ, DATABASE_URL=f"sqlite:///{db_path.as_posix()}")
-    return subprocess.run(
-        [sys.executable, "-m", "alembic", *args],
-        cwd=str(BASE_DIR), env=env, capture_output=True, text=True, timeout=180,
-    )
-
-
 def test_migration_builds_all_tables_and_matches_models(tmp_path):
     db_path = tmp_path / "migrated.db"
-    up = _alembic(db_path, "upgrade", "head")
-    assert up.returncode == 0, up.stderr[-2000:]
+    # upgrade AND check in one subprocess (Python's slow start-up is paid once).
+    # command.check fails if a model changed without a new migration.
+    snippet = ("from alembic import command; from alembic.config import Config; "
+               "cfg = Config('alembic.ini'); command.upgrade(cfg, 'head'); command.check(cfg); print('MIGRATION_OK')")
+    env = dict(os.environ, DATABASE_URL=f"sqlite:///{db_path.as_posix()}")
+    run = subprocess.run([sys.executable, "-c", snippet], cwd=str(BASE_DIR), env=env,
+                         capture_output=True, text=True, timeout=180)
+    assert run.returncode == 0 and "MIGRATION_OK" in run.stdout, run.stdout[-1500:] + run.stderr[-1500:]
 
     con = sqlite3.connect(db_path)
     try:
@@ -78,6 +76,3 @@ def test_migration_builds_all_tables_and_matches_models(tmp_path):
         con.close()
     assert {t.name for t in Base.metadata.sorted_tables} | {"alembic_version"} == tables
     assert version == "0004"
-
-    check = _alembic(db_path, "check")  # fails if a model changed without a new migration
-    assert check.returncode == 0, check.stdout + check.stderr

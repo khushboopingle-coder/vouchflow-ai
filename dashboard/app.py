@@ -93,6 +93,20 @@ demo_setup = _fresh_module("demo_setup")
 ui = _fresh_module("ui_common")
 
 ui.apply_global_css()
+
+# Streamlit Cloud "Secrets" -> environment FIRST (the database link is read once, at import time),
+# then the startup check: in production a missing/unsafe required setting is shown by NAME and stops here.
+demo_setup.load_secrets_into_env()
+from backend.startup_check import check_environment  # noqa: E402  (must come after the secrets are loaded)
+
+_config_errors = [p for p in check_environment() if p.level == "error"]
+if _config_errors:
+    st.error("**VouchFlow cannot start: the configuration is incomplete.** "
+             "Add the missing values under *Settings -> Secrets* (see DEPLOY.md).")
+    for _problem in _config_errors:
+        st.markdown(f"- **`{_problem.variable}`** - {_problem.message}")
+    st.stop()
+
 # Demo start-up: works without API / .env / Gemini key (seeds an empty database once)
 demo_setup.ensure_demo_ready()
 

@@ -12,9 +12,19 @@ Database:
 """
 
 from pathlib import Path
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_SQLITE_URL = "sqlite:///./vouchflow.db"
+
+# Text copied from the example files that must NEVER count as a real secret
+PLACEHOLDER_MARKERS = ("replace_with", "your_gemini", "your-gemini", "your_api_key", "changeme", "change_me", "<your")
+
+
+def is_placeholder(value: str) -> bool:
+    """True for empty values and for the placeholder text of .env.example / secrets.toml.example."""
+    text = (value or "").strip().lower()
+    return not text or any(marker in text for marker in PLACEHOLDER_MARKERS)
 
 
 def normalize_database_url(url: str) -> str:
@@ -63,6 +73,15 @@ class Settings(BaseSettings):
     # 3-Way Matching Tolerance Settings
     # Differences up to this amount (in Rupees) are accepted as valid commercial rounding
     ROUNDING_TOLERANCE_RS: float = 1.00
+
+    # Contract Search (RAG) Embeddings Provider: 'local' (ONNX all-MiniLM-L6-v2) or 'gemini'
+    EMBEDDING_PROVIDER: str = "local"
+
+    @field_validator("GEMINI_API_KEY", "VOUCHFLOW_SECRET_KEY")
+    @classmethod
+    def _placeholder_means_not_set(cls, value: str) -> str:
+        """A copied-but-not-filled-in example value is treated as "not set" (never as a real key)."""
+        return "" if is_placeholder(value) else value.strip()
 
     @property
     def database_url(self) -> str:

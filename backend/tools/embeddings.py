@@ -2,9 +2,16 @@
 Defaults to local ONNX all-MiniLM-L6-v2 via ChromaDB (100% offline, free, no quota limits).
 Can be easily swapped to other providers (Google GenAI, HuggingFace, etc.) via configuration.
 """
+import threading
+from collections import OrderedDict
 from typing import List, Optional
 import os
 from langchain_core.embeddings import Embeddings
+
+
+_QUERY_CACHE: "OrderedDict[str, List[float]]" = OrderedDict()
+_QUERY_CACHE_MAX = 512
+_QUERY_CACHE_LOCK = threading.Lock()
 
 
 class ChromaDefaultEmbeddings(Embeddings):
@@ -24,9 +31,21 @@ class ChromaDefaultEmbeddings(Embeddings):
         return [list(map(float, emb)) for emb in raw_embeddings]
 
     def embed_query(self, text: str) -> List[float]:
-        """Embed a single query string."""
+        """Embed a single query string. The same question always gives the same vector, and the
+        Investigation Agent asks the same questions again and again, so answers are remembered
+        (a small cache shared by all instances): about 0.5 s saved per repeated question."""
+        with _QUERY_CACHE_LOCK:
+            cached = _QUERY_CACHE.get(text)
+            if cached is not None:
+                _QUERY_CACHE.move_to_end(text)
+                return list(cached)
         raw_embedding = self._ef([text])[0]
-        return list(map(float, raw_embedding))
+        vector = list(map(float, raw_embedding))
+        with _QUERY_CACHE_LOCK:
+            _QUERY_CACHE[text] = vector
+            while len(_QUERY_CACHE) > _QUERY_CACHE_MAX:
+                _QUERY_CACHE.popitem(last=False)
+        return list(vector)
 
 
 def get_embedding_model(provider: Optional[str] = None) -> Embeddings:
@@ -34,7 +53,8 @@ def get_embedding_model(provider: Optional[str] = None) -> Embeddings:
     Defaults to local ONNX embeddings ('local' / 'chroma_default').
     To swap, pass provider='google_genai' or configure via EMBEDDING_PROVIDER in .env.
     """
-    prov = provider or os.getenv("EMBEDDING_PROVIDER", "local").lower()
+    from backend.config import settings
+    prov = (provider or os.getenv("EMBEDDING_PROVIDER") or settings.EMBEDDING_PROVIDER or "local").lower()
     
     if prov in ("local", "chroma", "chroma_default", "minilm"):
         return ChromaDefaultEmbeddings()

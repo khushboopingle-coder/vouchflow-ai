@@ -1,0 +1,84 @@
+# VouchFlow AI - the whole stack on one machine:  docker compose up -d --build
+#   API        http://localhost:8000   (docs at /docs)
+#   Dashboard  http://localhost:8501
+#   n8n        http://localhost:5678   (in n8n use the API address http://api:8000)
+#
+# Configuration comes from a .env file next to this one (copy .env.example). No secrets are in this file.
+# Without DATABASE_URL a SQLite file in the "vouchflow-db" volume is used (fine for a trial).
+# For real use put your Neon PostgreSQL link in DATABASE_URL and set ENVIRONMENT=production.
+
+x-vouchflow-env: &vouchflow-env
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  DATABASE_URL: ${DATABASE_URL:-sqlite:////app/db/vouchflow.db}
+  VOUCHFLOW_SECRET_KEY: ${VOUCHFLOW_SECRET_KEY:-}
+  GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+  GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+  GEMINI_MODEL_LIST: ${GEMINI_MODEL_LIST:-}
+  DASHBOARD_URL: ${DASHBOARD_URL:-http://localhost:8501}
+  DATA_DIR: /app/data
+  INGEST_RATE_LIMIT_PER_MINUTE: ${INGEST_RATE_LIMIT_PER_MINUTE:-20}
+  ROUNDING_TOLERANCE_RS: ${ROUNDING_TOLERANCE_RS:-1.00}
+  EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-local}
+
+services:
+  api:
+    build: .
+    container_name: vouchflow-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment: *vouchflow-env
+    volumes:
+      - vouchflow-db:/app/db
+      - vouchflow-uploads:/app/data/workspaces
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=4)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+      start_period: 40s
+
+  dashboard:
+    build: .
+    container_name: vouchflow-dashboard
+    restart: unless-stopped
+    command: ["python", "-m", "streamlit", "run", "dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
+    ports:
+      - "8501:8501"
+    environment: *vouchflow-env
+    volumes:
+      - vouchflow-db:/app/db
+      - vouchflow-uploads:/app/data/workspaces
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health', timeout=4)"]
+      interval: 20s
+      timeout: 6s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      api:
+        condition: service_healthy   # the API prepares the database first
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: vouchflow-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: http
+      GENERIC_TIMEZONE: UTC
+      # Reminder for the workflows' Settings node (not read by n8n itself): api_base_url = this address
+      VOUCHFLOW_API_URL: http://api:8000
+    volumes:
+      - n8n-data:/home/node/.n8n
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  vouchflow-db:
+  vouchflow-uploads:
+  n8n-data:

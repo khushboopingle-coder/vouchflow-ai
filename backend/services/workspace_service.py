@@ -208,16 +208,19 @@ def _copy_sample_rows(db: Session, sample_id: int, workspace_id: int, who: str) 
     maps: Dict[str, Dict[int, int]] = {k: {} for k in ("suppliers", "purchase_orders", "grns", "invoices")}
 
     def copy_rows(model, key, **fk_maps):
+        """Copies every sample row of one table in ONE batch (fast), remembering old id -> new id."""
+        pairs = []
         for row in db.query(model).filter(model.workspace_id == sample_id).order_by(model.id).all():
             overrides = {"workspace_id": workspace_id}
             for column, mapping in fk_maps.items():
                 value = getattr(row, column)
                 overrides[column] = maps[mapping].get(value) if value is not None else None
-            new = _clone(row, **overrides)
-            db.add(new)
-            db.flush()
-            if key:
-                maps[key][row.id] = new.id
+            pairs.append((row.id, _clone(row, **overrides)))
+        db.add_all([new for _, new in pairs])
+        db.flush()  # one batch: the new ids are known from here on
+        if key:
+            for old_id, new in pairs:
+                maps[key][old_id] = new.id
 
     copy_rows(Supplier, "suppliers")
     copy_rows(Contract, None, supplier_id="suppliers")
@@ -226,18 +229,20 @@ def _copy_sample_rows(db: Session, sample_id: int, workspace_id: int, who: str) 
     copy_rows(Invoice, "invoices", supplier_id="suppliers", po_id="purchase_orders")
 
     # children follow their parents
-    for item in db.query(POItem).filter(POItem.po_id.in_(list(maps["purchase_orders"]))).all():
-        db.add(_clone(item, po_id=maps["purchase_orders"][item.po_id]))
-    for item in db.query(GRNItem).filter(GRNItem.grn_id.in_(list(maps["grns"]))).all():
-        db.add(_clone(item, grn_id=maps["grns"][item.grn_id]))
+    db.add_all([_clone(item, po_id=maps["purchase_orders"][item.po_id]) for item in
+                db.query(POItem).filter(POItem.po_id.in_(list(maps["purchase_orders"]))).all()])
+    db.add_all([_clone(item, grn_id=maps["grns"][item.grn_id]) for item in
+                db.query(GRNItem).filter(GRNItem.grn_id.in_(list(maps["grns"]))).all()])
     inv_map = maps["invoices"]
     for model in (InvoiceItem, InvoiceExtraction, InvoiceCheck):
-        for row in db.query(model).filter(model.invoice_id.in_(list(inv_map))).all():
-            db.add(_clone(row, invoice_id=inv_map[row.invoice_id]))
+        db.add_all([_clone(row, invoice_id=inv_map[row.invoice_id]) for row in
+                    db.query(model).filter(model.invoice_id.in_(list(inv_map))).all()])
+    reports = []
     for row in db.query(InvoiceInvestigation).filter(InvoiceInvestigation.invoice_id.in_(list(inv_map))).all():
         report = json.loads(row.report_json)
         report["invoice_id"] = inv_map[row.invoice_id]
-        db.add(_clone(row, invoice_id=inv_map[row.invoice_id], report_json=json.dumps(report)))
+        reports.append(_clone(row, invoice_id=inv_map[row.invoice_id], report_json=json.dumps(report)))
+    db.add_all(reports)
 
     db.add(AuditLog(
         who=who, action="sample_data_loaded", workspace_id=workspace_id,

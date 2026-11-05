@@ -28,10 +28,12 @@ You need three things from VouchFlow:
    python -m uvicorn backend.main:app --reload
    ```
    It listens on `http://localhost:8000`. (Check: open http://localhost:8000/health - it shows `{"status":"ok"}`.)
-2. **A workspace with your purchase orders etc.** Open the dashboard (`streamlit run dashboard/app.py`), create an
-   account and use the **My data** page to upload purchase orders, goods received notes and contract prices.
-   *(For a quick test, use the three template files you can download there - the sample invoices in
-   `data/samples/` match them exactly.)*
+2. **A workspace with purchase orders.** Open the dashboard (`streamlit run dashboard/app.py`) and create an account.
+   *For a quick test* just keep **Start with sample data** ticked: the ready-made fake invoices
+   `data/samples/sample_invoice_clean.pdf` and `sample_invoice_price_mismatch.pdf` belong to a sample order that is
+   already in that data (Patel Enterprises, PO-2026-0002). *For your own data* use the **My data** page to upload
+   purchase orders, goods received notes and contract prices (there are download templates; the invoices
+   `template_invoice_clean.pdf` and `template_invoice_price_mismatch.pdf` match those templates).
 3. **An API key.** Dashboard -> **Settings** -> type a name (e.g. `n8n`) -> **Create key**. Copy the key that appears
    (starts with `vf_`). **It is shown only once.** If you lose it, revoke it and create a new one.
 
@@ -75,11 +77,14 @@ You need three things from VouchFlow:
      "dashboard_link": "http://localhost:8501/investigation?invoice=7", "human_approval_required": true, ... }
    ```
    Now try the second sample: `data/samples/sample_invoice_price_mismatch.pdf` -> `"status": "mismatch_detected"`,
-   `"mistakes": ["price_mismatch"]` (the chair is billed at Rs. 4,800 but the contract price is Rs. 4,500).
+   `"mistakes": ["price_mismatch"]` (the Standing Desk is billed at Rs. 12,600 but the contract price is Rs. 12,000;
+   11 desks, so the difference is Rs. 6,600 plus 18 % GST = Rs. 7,788). There is **no** `missing_po`: the order exists.
 
-> **The two sample invoices are fake** and are made by `python scripts/make_sample_invoices.py`. They match the
-> template CSV files (supplier *Acme Office Supplies*, PO-1001). If you upload the same invoice twice, VouchFlow
-> correctly flags the second one as a duplicate.
+> **The sample invoices are fake** and are made by `python scripts/make_sample_invoices.py` (the sample-data ones read the
+> real sample order, so they cannot drift from the data). Use **a workspace that holds the sample data** for
+> `sample_invoice_*.pdf`, or **your own workspace with the three template CSVs** for `template_invoice_*.pdf`.
+> If you send the same invoice twice, VouchFlow correctly flags the second one as a duplicate.
+> Reading the PDF needs a Gemini key on the API server (see above); without one the answer is `needs_review`.
 
 You can also skip n8n and call the API directly:
 ```
@@ -111,10 +116,10 @@ curl.exe -X POST "http://localhost:8000/api/invoices/ingest" -H "X-API-Key: PAST
    workflow to **Active** (toggle, top right) so it keeps running.
 
 ### What the Telegram messages look like
-- Problem: `MISMATCH: Invoice INV-ACME-0002 from Acme Office Supplies - Rs. 63,720.00` /
+- Problem: `MISMATCH: Invoice INV-DEMO-0002 from Patel Enterprises - Rs. 275,058.00` /
   `Problems: price mismatch (difference Rs. ...)` / `Recommended: Ask the supplier for clarification` /
   `A person must approve it: <link>`
-- Clean: `Invoice INV-ACME-0001 (Acme Office Supplies, Rs. 60,180) is verified. A person still has to approve it: <link>`
+- Clean: `Invoice INV-DEMO-0001 (Patel Enterprises, Rs. 267,270) is verified. A person still has to approve it: <link>`
 - Failure (wrong key, too many calls, bad file): `VouchFlow could not process invoice.pdf: ...`
 
 The link opens the dashboard's Investigation page for that invoice (you log in first).

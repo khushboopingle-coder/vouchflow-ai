@@ -39,6 +39,7 @@ from backend.auth import rate_limit
 from backend.auth.dependencies import APIKeyAccount, api_key_account, current_account
 from backend.auth.tokens import create_token
 from backend.database.db import get_db, init_db
+from backend.startup_check import run_startup_check
 from backend.database import schemas
 from backend.database.models import AuditLog
 from backend.agent.state import InvestigationReport
@@ -48,7 +49,8 @@ from backend.services.auth_service import Account, AuthError
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initializes tables on server startup."""
+    """Checks the configuration (names any missing environment variable), then prepares the tables."""
+    run_startup_check()
     init_db()
     yield
 

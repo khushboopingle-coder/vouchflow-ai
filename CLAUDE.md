@@ -85,17 +85,20 @@ python scripts/run_extraction_eval.py    # evals: also run_matching_eval, run_co
 python scripts/run_agent_eval.py         #        eval_hard_v2
 ```
 
-## Deploy (Streamlit Community Cloud)
-- Main file path: `dashboard/app.py` · Python 3.12 · `requirements.txt` is pinned
-- No API, no .env, no key needed (agent uses template explanation). Optional key:
-  add `GEMINI_API_KEY` in the app's Secrets (visitors would then use that quota).
-- Cloud DB is temporary; it re-seeds itself after a restart. Peak memory ~470 MB locally.
+## Deploy (see DEPLOY.md for the numbered steps)
+- Dashboard on Streamlit Community Cloud: main file `dashboard/app.py`, Python 3.12, pinned `requirements.txt`; secrets
+  (`.streamlit/secrets.toml.example` lists the names) are copied into the environment by `dashboard/demo_setup.py`.
+- API on Render (`render.yaml`, start `python -m uvicorn backend.main:app`, health `/health`), database on Neon; or everything
+  with `docker compose up` (`Dockerfile`, `docker-compose.yml`; never built on this machine - Docker not installed).
+- `backend/startup_check.py`: in `ENVIRONMENT=production` the API and dashboard refuse to start without a real `DATABASE_URL`
+  (not SQLite) and a `VOUCHFLOW_SECRET_KEY` (32+ chars) and name the missing variable. Placeholder text counts as "not set".
+- Without any config the dashboard still runs on a temporary SQLite file and seeds the demo data. API peak memory ~266 MB.
 
 ## Phases
 - Done: Foundation, Phase 1 reader, Phases 2–3 checker, Phase 4 contract search,
   Phase 5 agent with guardrails and evals (agent 20/20 on test set),
   Phase 8 dashboard pages (Investigation, Approvals, Evals) + approvals backend.
-- Master plan (VOUCHFLOW_MASTER_PLAN.md): Phases 2 (login + workspaces), 3 (own data + AI limits) 4 (ingest API) and 5 (n8n files) DONE; see PROGRESS.md.
+- Master plan (VOUCHFLOW_MASTER_PLAN.md): Phases 2-7 DONE (login + workspaces, own data + AI limits, ingest API, n8n files, deployment prep, README); see PROGRESS.md.
 - Pending idea (not done, needs OK): switch `langchain_community.vectorstores.Chroma`
   to `langchain_chroma` package.
 
@@ -115,6 +118,12 @@ python scripts/run_agent_eval.py         #        eval_hard_v2
 - `n8n/` (Phase 5): `invoice_workflow.json` (Gmail->ingest->Telegram), `webhook_workflow.json`, beginner `README.md`.
   Credentials only by name, never keys in JSON (`tests/test_n8n_workflows.py` scans). Sample invoices in `data/samples/`
   (made by `scripts/make_sample_invoices.py`; match the CSV templates).
+- TESTS (pytest.ini, tests/conftest.py): never call the real Gemini (key blanked before import; creating a real client raises);
+  per-workspace contract indexes use `tests/fake_embeddings.py`; bcrypt rounds=4 in tests only; 90 s timeout per test;
+  a session fixture deletes stale `pytest-*@example.com` accounts left by cut-off runs. Full suite ~2 minutes.
+  Subprocess/DB-swapping tests must never touch the real `vouchflow.db` (see `tests/test_demo_setup.py` safety check).
+- Sample invoices: `data/samples/sample_invoice_*.pdf` reuse the real sample order (Patel Enterprises, PO-2026-0002) ->
+  verified / price_mismatch; `template_invoice_*.pdf` match the CSV templates. Regenerate: `python scripts/make_sample_invoices.py`.
 - PROGRESS.md tracks the master plan (Phases 2-7) and where to continue.
 - `.env` has TWO `DATABASE_URL` lines (line 2 SQLite, line 8 Neon); the last one wins -> Neon.
 - Tests are forced to SQLite by `tests/conftest.py` (set `TEST_DATABASE_URL` to override).

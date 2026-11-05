@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: vouchflow-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: VOUCHFLOW_SECRET_KEY
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DASHBOARD_URL
+        sync: false
+      - key: INGEST_RATE_LIMIT_PER_MINUTE
+        value: "20"
+      - key: ROUNDING_TOLERANCE_RS
+        value: "1.00"
+      - key: EMBEDDING_PROVIDER
+        value: local
+
